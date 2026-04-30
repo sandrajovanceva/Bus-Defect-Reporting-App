@@ -1,4 +1,4 @@
-# bus_defect_reporting_app
+# Bus Defect Reporting App
 
 A new Flutter project.
 

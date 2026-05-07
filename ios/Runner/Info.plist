@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Потребен е пристап до камерата за да приложите слика од дефектот.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Потребен е пристап до галеријата за да приложите слика од дефектот.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Потребен е пристап до микрофонот при снимање видео од дефектот.</string>
 </dict>
 </plist>

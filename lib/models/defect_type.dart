@@ -1,0 +1,75 @@
+import 'package:flutter/material.dart';
+
+import 'maintenance_department.dart';
+
+enum DefectType {
+  electrical,
+  mechanical,
+  doors,
+  brakes,
+  lights,
+  climate,
+  bodywork,
+  other,
+}
+
+extension DefectTypeX on DefectType {
+  String get label {
+    switch (this) {
+      case DefectType.electrical:
+        return 'Електрика';
+      case DefectType.mechanical:
+        return 'Механика';
+      case DefectType.doors:
+        return 'Врати';
+      case DefectType.brakes:
+        return 'Кочници';
+      case DefectType.lights:
+        return 'Светла';
+      case DefectType.climate:
+        return 'Греење / климатизација';
+      case DefectType.bodywork:
+        return 'Каросерија';
+      case DefectType.other:
+        return 'Друго';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case DefectType.electrical:
+        return Icons.bolt_rounded;
+      case DefectType.mechanical:
+        return Icons.build_rounded;
+      case DefectType.doors:
+        return Icons.meeting_room_outlined;
+      case DefectType.brakes:
+        return Icons.disc_full_rounded;
+      case DefectType.lights:
+        return Icons.lightbulb_outline_rounded;
+      case DefectType.climate:
+        return Icons.thermostat_rounded;
+      case DefectType.bodywork:
+        return Icons.directions_bus_filled_rounded;
+      case DefectType.other:
+        return Icons.more_horiz_rounded;
+    }
+  }
+
+  MaintenanceDepartment get department {
+    switch (this) {
+      case DefectType.electrical:
+      case DefectType.lights:
+      case DefectType.climate:
+        return MaintenanceDepartment.electrical;
+      case DefectType.mechanical:
+      case DefectType.brakes:
+        return MaintenanceDepartment.mechanical;
+      case DefectType.bodywork:
+      case DefectType.doors:
+        return MaintenanceDepartment.bodywork;
+      case DefectType.other:
+        return MaintenanceDepartment.general;
+    }
+  }
+}

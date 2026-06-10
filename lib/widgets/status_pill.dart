@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
 
-enum DefectStatus { newReport, inProgress, resolved }
+enum DefectStatus { newReport, inProgress, resolved, rejected }
 
 extension DefectStatusX on DefectStatus {
   String get label {
@@ -13,6 +13,8 @@ extension DefectStatusX on DefectStatus {
         return 'IN PROGRESS';
       case DefectStatus.resolved:
         return 'RESOLVED';
+      case DefectStatus.rejected:
+        return 'REJECTED';
     }
   }
 
@@ -24,6 +26,8 @@ extension DefectStatusX on DefectStatus {
         return AppColors.statusInProgress;
       case DefectStatus.resolved:
         return AppColors.statusResolved;
+      case DefectStatus.rejected:
+        return AppColors.statusRejected;
     }
   }
 }

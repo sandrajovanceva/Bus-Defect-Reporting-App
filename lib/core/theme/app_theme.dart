@@ -22,6 +22,7 @@ class AppColors {
   static const Color statusNew = Color(0xFFDC2626);
   static const Color statusInProgress = Color(0xFFB45309);
   static const Color statusResolved = Color(0xFF15803D);
+  static const Color statusRejected = Color(0xFF6B7280);
 }
 
 class AppTheme {

@@ -6,62 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../models/defect_priority.dart';
+import '../../models/defect_type.dart';
+import '../../models/maintenance_department.dart';
 import '../../widgets/widgets.dart';
-
-enum DefectType {
-  electrical,
-  mechanical,
-  doors,
-  brakes,
-  lights,
-  climate,
-  bodywork,
-  other,
-}
-
-extension on DefectType {
-  String get label {
-    switch (this) {
-      case DefectType.electrical:
-        return 'Електрика';
-      case DefectType.mechanical:
-        return 'Механика';
-      case DefectType.doors:
-        return 'Врати';
-      case DefectType.brakes:
-        return 'Кочници';
-      case DefectType.lights:
-        return 'Светла';
-      case DefectType.climate:
-        return 'Греење / климатизација';
-      case DefectType.bodywork:
-        return 'Каросерија';
-      case DefectType.other:
-        return 'Друго';
-    }
-  }
-
-  IconData get icon {
-    switch (this) {
-      case DefectType.electrical:
-        return Icons.bolt_rounded;
-      case DefectType.mechanical:
-        return Icons.build_rounded;
-      case DefectType.doors:
-        return Icons.meeting_room_outlined;
-      case DefectType.brakes:
-        return Icons.disc_full_rounded;
-      case DefectType.lights:
-        return Icons.lightbulb_outline_rounded;
-      case DefectType.climate:
-        return Icons.thermostat_rounded;
-      case DefectType.bodywork:
-        return Icons.directions_bus_filled_rounded;
-      case DefectType.other:
-        return Icons.more_horiz_rounded;
-    }
-  }
-}
 
 class DefectReportScreen extends StatefulWidget {
   const DefectReportScreen({super.key});
@@ -77,6 +25,7 @@ class _DefectReportScreenState extends State<DefectReportScreen> {
   final _imagePicker = ImagePicker();
 
   DefectType? _selectedType;
+  DefectPriority _selectedPriority = DefectPriority.medium;
   XFile? _attachment;
   bool _isSubmitting = false;
   String? _submitError;
@@ -303,6 +252,19 @@ class _DefectReportScreenState extends State<DefectReportScreen> {
                             validator: (type) => type == null
                                 ? 'Изберете тип на дефект'
                                 : null,
+                          ),
+                          if (_selectedType != null) ...[
+                            const SizedBox(height: 10),
+                            _DepartmentBadge(
+                              department: _selectedType!.department,
+                            ),
+                          ],
+                          const SizedBox(height: 20),
+                          _PrioritySelector(
+                            selected: _selectedPriority,
+                            enabled: !_isSubmitting,
+                            onChanged: (p) =>
+                                setState(() => _selectedPriority = p),
                           ),
                           const SizedBox(height: 20),
                           AppTextField(
@@ -745,6 +707,162 @@ class _HelperNote extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _DepartmentBadge extends StatelessWidget {
+  const _DepartmentBadge({required this.department});
+
+  final MaintenanceDepartment department;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.alt_route_rounded,
+            size: 16,
+            color: AppColors.textSecondary,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ДОДЕЛЕН ОДДЕЛ',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: AppColors.textMuted,
+                    fontSize: 9,
+                    letterSpacing: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  department.label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppColors.border,
+              borderRadius: BorderRadius.circular(2),
+            ),
+            child: Text(
+              department.code,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontSize: 9,
+                letterSpacing: 1.4,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrioritySelector extends StatelessWidget {
+  const _PrioritySelector({
+    required this.selected,
+    required this.onChanged,
+    required this.enabled,
+  });
+
+  final DefectPriority selected;
+  final ValueChanged<DefectPriority> onChanged;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Приоритет',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: AppColors.textSecondary,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: DefectPriority.values.map((priority) {
+            final isSelected = priority == selected;
+            final color = priority.color;
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: priority != DefectPriority.values.last ? 8 : 0,
+                ),
+                child: GestureDetector(
+                  onTap: enabled ? () => onChanged(priority) : null,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? color.withValues(alpha: 0.10)
+                          : AppColors.surface,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: isSelected
+                            ? color
+                            : AppColors.border,
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          priority.icon,
+                          size: 18,
+                          color: isSelected ? color : AppColors.textMuted,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          priority.labelEn,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: isSelected ? color : AppColors.textMuted,
+                            fontSize: 9,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 }

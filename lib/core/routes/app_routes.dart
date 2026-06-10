@@ -8,5 +8,7 @@ class AppRoutes {
   static const String defectReport = '/defects/new';
   static const String defectDetailsPattern = '/defects/:id';
 
+  static const String management = '/management';
+
   static String defectDetails(String id) => '/defects/$id';
 }

@@ -189,7 +189,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Статуси, возачи и линии',
           icon: Icons.tune_rounded,
           primary: false,
-          onTap: () {},
+          onTap: () => context.push(AppRoutes.management),
         ),
       ];
 }

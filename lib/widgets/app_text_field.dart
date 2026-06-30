@@ -76,8 +76,7 @@ class _AppTextFieldState extends State<AppTextField> {
                           : Icons.visibility_outlined,
                       size: 20,
                     ),
-                    onPressed: () =>
-                        setState(() => _obscured = !_obscured),
+                    onPressed: () => setState(() => _obscured = !_obscured),
                     tooltip: _obscured ? 'Show password' : 'Hide password',
                   )
                 : null,

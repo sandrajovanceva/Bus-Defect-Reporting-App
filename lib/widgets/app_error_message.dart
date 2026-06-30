@@ -4,11 +4,7 @@ import '../core/theme/app_theme.dart';
 import 'app_button.dart';
 
 class AppErrorMessage extends StatelessWidget {
-  const AppErrorMessage({
-    super.key,
-    required this.message,
-    this.onRetry,
-  });
+  const AppErrorMessage({super.key, required this.message, this.onRetry});
 
   final String message;
   final VoidCallback? onRetry;

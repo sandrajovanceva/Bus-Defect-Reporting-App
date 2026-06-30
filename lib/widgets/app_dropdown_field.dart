@@ -14,7 +14,6 @@ class AppDropdownOption<T> {
   final IconData? icon;
 }
 
-
 class AppDropdownField<T> extends StatelessWidget {
   const AppDropdownField({
     super.key,
@@ -64,8 +63,7 @@ class AppDropdownField<T> extends StatelessWidget {
           style: theme.textTheme.bodyLarge,
           decoration: InputDecoration(
             hintText: hint,
-            prefixIcon:
-                prefixIcon == null ? null : Icon(prefixIcon, size: 20),
+            prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, size: 20),
           ),
           items: options
               .map(

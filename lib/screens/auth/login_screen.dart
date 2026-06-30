@@ -16,14 +16,14 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _userIdController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isSubmitting = false;
   String? _serverError;
 
   @override
   void dispose() {
-    _userIdController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -35,10 +35,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _isSubmitting = true);
 
-    final error = await ref.read(authProvider.notifier).login(
-          _userIdController.text,
-          _passwordController.text,
-        );
+    final error = await ref
+        .read(authProvider.notifier)
+        .login(_emailController.text, _passwordController.text);
 
     if (!mounted) return;
     setState(() => _isSubmitting = false);
@@ -65,7 +64,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-
                   Row(
                     children: [
                       Container(
@@ -105,8 +103,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Text('Sign in.', style: theme.textTheme.displayMedium),
                   const SizedBox(height: 12),
                   Text(
-                    'Автентицирај се со твоите credentials за да поднесуваш '
-                    'и следиш извештаи за дефекти.',
+                    'Use your dispatch-issued email and password to submit and track bus defect reports.',
                     style: theme.textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 40),
@@ -116,23 +113,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         AppTextField(
-                          label: 'Корисничко ID',
-                          hint: 'Пр. D-4827 или DISP-001',
-                          controller: _userIdController,
-                          prefixIcon: Icons.badge_outlined,
+                          label: 'Email',
+                          hint: 'driver@example.com',
+                          controller: _emailController,
+                          prefixIcon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           enabled: !_isSubmitting,
                           validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'ID-то е задолжително';
+                            final email = value?.trim() ?? '';
+                            if (email.isEmpty) return 'Email is required';
+                            if (!email.contains('@') || !email.contains('.')) {
+                              return 'Enter a valid email address';
                             }
                             return null;
                           },
                         ),
                         const SizedBox(height: 20),
                         AppTextField(
-                          label: 'Лозинка',
-                          hint: 'Внеси лозинка',
+                          label: 'Password',
+                          hint: 'Enter password',
                           controller: _passwordController,
                           prefixIcon: Icons.lock_outline,
                           obscureText: true,
@@ -141,10 +141,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onSubmitted: (_) => _submit(),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Лозинката е задолжителна';
+                              return 'Password is required';
                             }
-                            if (value.length < 4) {
-                              return 'Лозинката е прекратка';
+                            if (value.length < 6) {
+                              return 'Password must be at least 6 characters';
                             }
                             return null;
                           },
@@ -157,9 +157,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               vertical: 12,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.statusNew.withValues(alpha: 0.10),
+                              color: AppColors.statusNew.withValues(
+                                alpha: 0.10,
+                              ),
                               border: Border.all(
-                                color: AppColors.statusNew.withValues(alpha: 0.4),
+                                color: AppColors.statusNew.withValues(
+                                  alpha: 0.4,
+                                ),
                               ),
                               borderRadius: BorderRadius.circular(4),
                             ),
@@ -185,7 +189,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ],
                         const SizedBox(height: 32),
                         AppButton(
-                          label: 'Автентицирај',
+                          label: 'Sign in',
                           icon: Icons.arrow_forward_rounded,
                           isLoading: _isSubmitting,
                           onPressed: _submit,
@@ -202,7 +206,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
-                          'НЕМАШ ПРИСТАП?',
+                          'NO ACCESS?',
                           style: theme.textTheme.labelSmall,
                         ),
                       ),
@@ -214,7 +218,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 12),
                   Center(
                     child: Text(
-                      'Контактирај ја диспечерницата за да добиеш акаунт.',
+                      'Contact dispatch to create or reset your account.',
                       style: theme.textTheme.bodySmall,
                       textAlign: TextAlign.center,
                     ),

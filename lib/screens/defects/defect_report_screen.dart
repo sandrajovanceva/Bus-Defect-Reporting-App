@@ -1,7 +1,6 @@
 import 'dart:io';
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -9,16 +8,19 @@ import '../../core/theme/app_theme.dart';
 import '../../models/defect_priority.dart';
 import '../../models/defect_type.dart';
 import '../../models/maintenance_department.dart';
+import '../../services/auth_service.dart';
+import '../../services/defect_service.dart';
+import '../../services/storage_service.dart';
 import '../../widgets/widgets.dart';
 
-class DefectReportScreen extends StatefulWidget {
+class DefectReportScreen extends ConsumerStatefulWidget {
   const DefectReportScreen({super.key});
 
   @override
-  State<DefectReportScreen> createState() => _DefectReportScreenState();
+  ConsumerState<DefectReportScreen> createState() => _DefectReportScreenState();
 }
 
-class _DefectReportScreenState extends State<DefectReportScreen> {
+class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
   final _formKey = GlobalKey<FormState>();
   final _busNumberController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -108,12 +110,48 @@ class _DefectReportScreenState extends State<DefectReportScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      await _fakeSubmit();
+      final user = ref.read(authProvider).value;
+      if (user == null) {
+        throw const _SubmitException(
+          'Please sign in before submitting a report.',
+        );
+      }
+
+      final imageUrl = await ref
+          .read(defectStorageServiceProvider)
+          .uploadDefectImage(image: _attachment, userId: user.id);
+
+      await ref
+          .read(defectRepositoryProvider)
+          .createDefect(
+            DefectDraft(
+              userId: user.id,
+              userName: user.fullName,
+              busNumber: _busNumberController.text,
+              type: _selectedType!,
+              priority: _selectedPriority,
+              description: _descriptionController.text,
+              imageUrl: imageUrl,
+            ),
+          );
+
       if (!mounted) return;
 
       await _showSuccessSheet();
       if (!mounted) return;
       context.pop();
+    } on DefectFailure catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _submitError = e.message;
+      });
+    } on StorageFailure catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _submitError = e.message;
+      });
     } on _SubmitException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -125,24 +163,8 @@ class _DefectReportScreenState extends State<DefectReportScreen> {
       setState(() {
         _isSubmitting = false;
         _submitError =
-            'Дојде до неочекувана грешка. Обидете се повторно.';
+            'Unable to submit the report. Check your connection and try again.';
       });
-    }
-  }
-
-  Future<void> _fakeSubmit() async {
-    await Future<void>.delayed(const Duration(milliseconds: 900));
-    final busNumber = _busNumberController.text.trim();
-    if (busNumber == '0000') {
-      throw const _SubmitException(
-        'Серверот не е достапен. Проверете ја интернет '
-        'врската и обидете се повторно.',
-      );
-    }
-    if (math.Random().nextInt(50) == 0) {
-      throw const _SubmitException(
-        'Извештајот не можеше да биде испратен. Обидете се повторно.',
-      );
     }
   }
 
@@ -249,9 +271,8 @@ class _DefectReportScreenState extends State<DefectReportScreen> {
                             enabled: !_isSubmitting,
                             onChanged: (type) =>
                                 setState(() => _selectedType = type),
-                            validator: (type) => type == null
-                                ? 'Изберете тип на дефект'
-                                : null,
+                            validator: (type) =>
+                                type == null ? 'Изберете тип на дефект' : null,
                           ),
                           if (_selectedType != null) ...[
                             const SizedBox(height: 10),
@@ -291,8 +312,7 @@ class _DefectReportScreenState extends State<DefectReportScreen> {
                             attachment: _attachment,
                             enabled: !_isSubmitting,
                             onPick: _showAttachmentSheet,
-                            onClear: () =>
-                                setState(() => _attachment = null),
+                            onClear: () => setState(() => _attachment = null),
                           ),
                           const SizedBox(height: 16),
                           const _HelperNote(
@@ -345,10 +365,7 @@ class _ReportHeader extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.accent,
                   borderRadius: BorderRadius.circular(2),
@@ -479,9 +496,7 @@ class _AttachmentPicker extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(4),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
             child: AspectRatio(
               aspectRatio: 16 / 9,
               child: Image.file(
@@ -542,10 +557,7 @@ class _AttachmentPicker extends StatelessWidget {
 }
 
 class _InlineErrorBanner extends StatelessWidget {
-  const _InlineErrorBanner({
-    required this.message,
-    required this.onDismiss,
-  });
+  const _InlineErrorBanner({required this.message, required this.onDismiss});
 
   final String message;
   final VoidCallback onDismiss;
@@ -829,9 +841,7 @@ class _PrioritySelector extends StatelessWidget {
                           : AppColors.surface,
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(
-                        color: isSelected
-                            ? color
-                            : AppColors.border,
+                        color: isSelected ? color : AppColors.border,
                         width: isSelected ? 1.5 : 1,
                       ),
                     ),

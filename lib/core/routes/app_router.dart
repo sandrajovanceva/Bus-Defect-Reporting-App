@@ -6,6 +6,7 @@ import '../../screens/defects/defect_report_screen.dart';
 import '../../screens/defects/my_defects_screen.dart';
 import '../../screens/home/home_screen.dart';
 import '../../screens/management/management_screen.dart';
+import '../../screens/map/defect_map_screen.dart';
 import '../../screens/splash/splash_screen.dart';
 import 'app_routes.dart';
 
@@ -34,6 +35,10 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.management,
         builder: (_, __) => const ManagementScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.defectMap,
+        builder: (_, __) => const DefectMapScreen(),
       ),
     ],
   );

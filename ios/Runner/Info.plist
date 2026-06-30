@@ -45,6 +45,8 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Потребен е пристап до локацијата за да ја прикачите локацијата на дефектот.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Потребен е пристап до камерата за да приложите слика од дефектот.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

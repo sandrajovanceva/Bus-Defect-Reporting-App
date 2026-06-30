@@ -17,6 +17,8 @@ class DefectModel {
     required this.submittedById,
     required this.submittedByName,
     this.imageUrl,
+    this.latitude,
+    this.longitude,
     this.updatedAt,
     this.history = const [],
   });
@@ -32,8 +34,12 @@ class DefectModel {
   final String submittedById;
   final String submittedByName;
   final String? imageUrl;
+  final double? latitude;
+  final double? longitude;
   final DateTime? updatedAt;
   final List<DefectHistoryEntry> history;
+
+  bool get hasLocation => latitude != null && longitude != null;
 
   DefectModel copyWith({
     DefectStatus? status,
@@ -53,6 +59,8 @@ class DefectModel {
       submittedById: submittedById,
       submittedByName: submittedByName,
       imageUrl: imageUrl ?? this.imageUrl,
+      latitude: latitude,
+      longitude: longitude,
       updatedAt: updatedAt ?? this.updatedAt,
       history: history ?? this.history,
     );

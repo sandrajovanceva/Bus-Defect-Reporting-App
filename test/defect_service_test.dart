@@ -16,6 +16,8 @@ void main() {
       priority: DefectPriority.high,
       description: ' Brake pedal feels soft. ',
       imageUrl: 'https://storage.example/defect.jpg',
+      latitude: 41.9981,
+      longitude: 21.4254,
     );
 
     final data = DefectRepository.buildCreateData(
@@ -35,6 +37,8 @@ void main() {
     expect(data['department'], DefectType.brakes.department.name);
     expect(data['status'], DefectStatus.newReport.name);
     expect(data['imageUrl'], 'https://storage.example/defect.jpg');
+    expect(data['latitude'], 41.9981);
+    expect(data['longitude'], 21.4254);
     expect(data['createdAt'], isA<FieldValue>());
     expect(data['updatedAt'], isA<FieldValue>());
 

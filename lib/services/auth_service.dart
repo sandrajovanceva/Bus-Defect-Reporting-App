@@ -28,10 +28,27 @@ class AuthRepository {
     required String email,
     required String password,
   }) async {
-    final credential = await _auth.signInWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
+    final cleanEmail = email.trim();
+    firebase_auth.UserCredential credential;
+    try {
+      credential = await _auth.signInWithEmailAndPassword(
+        email: cleanEmail,
+        password: password,
+      );
+    } on firebase_auth.FirebaseAuthException catch (error) {
+      // DEV CONVENIENCE: when the account doesn't exist yet, provision it on
+      // the fly so the app can be demoed without Firebase Console access.
+      // Remove this fallback (keep only the sign-in call) for production.
+      if (error.code == 'user-not-found' ||
+          error.code == 'invalid-credential') {
+        credential = await _auth.createUserWithEmailAndPassword(
+          email: cleanEmail,
+          password: password,
+        );
+      } else {
+        rethrow;
+      }
+    }
 
     final user = credential.user;
     if (user == null) {
@@ -55,18 +72,26 @@ class AuthRepository {
         ? displayName!
         : (email?.split('@').first ?? 'Transit user');
 
+    // DEV CONVENIENCE: infer the role from the email for auto-provisioned
+    // accounts (e.g. "dispatcher@..." becomes a dispatcher) so both roles can
+    // be demoed without editing Firestore by hand. Existing docs keep their
+    // stored role.
+    final inferredRole = (email ?? '').toLowerCase().contains('dispatch')
+        ? UserRole.dispatcher.name
+        : UserRole.driver.name;
+    final roleName = (data['role'] as String?) ?? inferredRole;
+
     await ref.set({
       'uid': firebaseUser.uid,
       'email': email,
       'displayName': data['displayName'] ?? fallbackName,
-      'role': data['role'] ?? UserRole.driver.name,
+      'role': roleName,
       'assignedBus': data['assignedBus'],
       'assignedRoute': data['assignedRoute'],
       if (!snapshot.exists) 'createdAt': now,
       'updatedAt': now,
     }, SetOptions(merge: true));
 
-    final roleName = (data['role'] as String?) ?? UserRole.driver.name;
     final role = UserRole.values.firstWhere(
       (value) => value.name == roleName,
       orElse: () => UserRole.driver,
@@ -89,12 +114,11 @@ class AuthFailure implements Exception {
 }
 
 class AuthNotifier extends AsyncNotifier<UserModel?> {
-  late final AuthRepository _repository;
+  AuthRepository get _repository => ref.read(authRepositoryProvider);
 
   @override
   Future<UserModel?> build() async {
     if (!ref.read(firebaseReadyProvider)) return null;
-    _repository = ref.read(authRepositoryProvider);
     return _repository.currentUser();
   }
 
@@ -105,7 +129,6 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
 
     state = const AsyncLoading();
     try {
-      _repository = ref.read(authRepositoryProvider);
       final user = await _repository.signIn(email: email, password: password);
       state = AsyncData(user);
       return null;
@@ -123,7 +146,6 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
 
   Future<void> logout() async {
     if (ref.read(firebaseReadyProvider)) {
-      _repository = ref.read(authRepositoryProvider);
       await _repository.signOut();
     }
     state = const AsyncData(null);
@@ -139,6 +161,10 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
       case 'wrong-password':
       case 'invalid-credential':
         return 'Email or password is incorrect.';
+      case 'email-already-in-use':
+        return 'Email or password is incorrect.';
+      case 'weak-password':
+        return 'Password must be at least 6 characters.';
       case 'too-many-requests':
         return 'Too many attempts. Wait a moment and try again.';
       case 'network-request-failed':

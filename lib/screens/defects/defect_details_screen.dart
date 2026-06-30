@@ -112,6 +112,15 @@ class DefectDetailsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     _Row(label: 'Возач', value: defect.submittedByName),
+                    if (defect.hasLocation) ...[
+                      const SizedBox(height: 8),
+                      _Row(
+                        label: 'Локација',
+                        value:
+                            '${defect.latitude!.toStringAsFixed(5)}, '
+                            '${defect.longitude!.toStringAsFixed(5)}',
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 16),

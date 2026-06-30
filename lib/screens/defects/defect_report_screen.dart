@@ -10,6 +10,7 @@ import '../../models/defect_type.dart';
 import '../../models/maintenance_department.dart';
 import '../../services/auth_service.dart';
 import '../../services/defect_service.dart';
+import '../../services/location_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/widgets.dart';
 
@@ -29,6 +30,8 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
   DefectType? _selectedType;
   DefectPriority _selectedPriority = DefectPriority.medium;
   XFile? _attachment;
+  DefectLocation? _location;
+  bool _isLocating = false;
   bool _isSubmitting = false;
   String? _submitError;
 
@@ -52,6 +55,34 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не можеше да се отвори сликата: $e')),
+      );
+    }
+  }
+
+  Future<void> _captureLocation() async {
+    setState(() => _isLocating = true);
+    try {
+      final location = await ref
+          .read(locationServiceProvider)
+          .getCurrentLocation();
+      if (!mounted) return;
+      setState(() {
+        _location = location;
+        _isLocating = false;
+      });
+    } on LocationFailure catch (e) {
+      if (!mounted) return;
+      setState(() => _isLocating = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } on Exception {
+      if (!mounted) return;
+      setState(() => _isLocating = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Не можеше да се одреди локацијата.'),
+        ),
       );
     }
   }
@@ -132,6 +163,8 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
               priority: _selectedPriority,
               description: _descriptionController.text,
               imageUrl: imageUrl,
+              latitude: _location?.latitude,
+              longitude: _location?.longitude,
             ),
           );
 
@@ -313,6 +346,15 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
                             enabled: !_isSubmitting,
                             onPick: _showAttachmentSheet,
                             onClear: () => setState(() => _attachment = null),
+                          ),
+                          const SizedBox(height: 28),
+                          const SectionHeader(title: 'Локација'),
+                          _LocationPicker(
+                            location: _location,
+                            isLocating: _isLocating,
+                            enabled: !_isSubmitting,
+                            onCapture: _captureLocation,
+                            onClear: () => setState(() => _location = null),
                           ),
                           const SizedBox(height: 16),
                           const _HelperNote(
@@ -548,6 +590,162 @@ class _AttachmentPicker extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LocationPicker extends StatelessWidget {
+  const _LocationPicker({
+    required this.location,
+    required this.isLocating,
+    required this.enabled,
+    required this.onCapture,
+    required this.onClear,
+  });
+
+  final DefectLocation? location;
+  final bool isLocating;
+  final bool enabled;
+  final VoidCallback onCapture;
+  final VoidCallback onClear;
+
+  String _format(double value) => value.toStringAsFixed(5);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final loc = location;
+
+    if (loc == null) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: enabled && !isLocating ? onCapture : null,
+          borderRadius: BorderRadius.circular(4),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: AppColors.border, width: 1.5),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.accentSurface,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    child: isLocating
+                        ? const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(
+                            Icons.my_location_rounded,
+                            color: AppColors.accent,
+                            size: 20,
+                          ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isLocating ? 'СЕ ОДРЕДУВА…' : 'ПРИКАЧИ ЛОКАЦИЈА',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontSize: 12,
+                            letterSpacing: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Опционално · GPS координати на дефектот',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 22,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.border),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.statusResolved.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(2),
+            ),
+            child: const Icon(
+              Icons.place_rounded,
+              color: AppColors.statusResolved,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ЛОКАЦИЈАТА Е ЗАЧУВАНА',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: AppColors.statusResolved,
+                    fontSize: 9,
+                    letterSpacing: 1.4,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${_format(loc.latitude)}, ${_format(loc.longitude)}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton.icon(
+            onPressed: enabled && !isLocating ? onCapture : null,
+            icon: const Icon(Icons.refresh_rounded, size: 16),
+            label: const Text('Освежи'),
+          ),
+          IconButton(
+            tooltip: 'Отстрани',
+            onPressed: enabled ? onClear : null,
+            icon: const Icon(
+              Icons.close_rounded,
+              size: 18,
+              color: AppColors.textSecondary,
             ),
           ),
         ],

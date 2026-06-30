@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/user_model.dart';
 import '../../models/user_role.dart';
 import '../../services/auth_service.dart';
+import '../../services/defect_service.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -46,6 +47,32 @@ class HomeScreen extends ConsumerWidget {
   String _formatDate(DateTime now) =>
       '${_days[now.weekday - 1]}, ${now.day} ${_months[now.month - 1]}';
 
+  Future<void> _seedDemoData(
+    BuildContext context,
+    WidgetRef ref,
+    UserModel user,
+  ) async {
+    final repo = ref.read(defectRepositoryProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final existing = await repo.countOwnDefects(user.id);
+      if (existing > 0) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('Веќе имате $existing пријавени дефекти.')),
+        );
+        return;
+      }
+      final count = await repo.seedSampleDefects(user);
+      messenger.showSnackBar(
+        SnackBar(content: Text('Внесени се $count демо дефекти.')),
+      );
+    } on Object {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Не можеше да се внесат демо податоци.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
@@ -68,6 +95,11 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('ГЛАВЕН ЕКРАН'),
         actions: [
+          IconButton(
+            tooltip: 'Внеси демо податоци',
+            icon: const Icon(Icons.dataset_outlined, size: 20),
+            onPressed: () => _seedDemoData(context, ref, user),
+          ),
           IconButton(
             tooltip: 'Одјави се',
             icon: const Icon(Icons.logout_rounded, size: 20),
@@ -199,6 +231,14 @@ class HomeScreen extends ConsumerWidget {
       primary: false,
       onTap: () => context.push(AppRoutes.myDefects),
     ),
+    const SizedBox(height: 12),
+    _ActionCard(
+      title: 'Мапа на дефекти',
+      subtitle: 'Прегледај дефекти на мапа',
+      icon: Icons.map_outlined,
+      primary: false,
+      onTap: () => context.push(AppRoutes.defectMap),
+    ),
   ];
 
   List<Widget> _dispatcherActions(BuildContext context) => [
@@ -208,6 +248,14 @@ class HomeScreen extends ConsumerWidget {
       icon: Icons.dashboard_rounded,
       primary: true,
       onTap: () => context.push(AppRoutes.myDefects),
+    ),
+    const SizedBox(height: 12),
+    _ActionCard(
+      title: 'Мапа на дефекти',
+      subtitle: 'Прегледај дефекти на мапа',
+      icon: Icons.map_outlined,
+      primary: false,
+      onTap: () => context.push(AppRoutes.defectMap),
     ),
     const SizedBox(height: 12),
     _ActionCard(

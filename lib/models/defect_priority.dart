@@ -41,11 +41,11 @@ enum DefectPriority {
   Color get color {
     switch (this) {
       case DefectPriority.low:
-        return const Color(0xFF15803D);   // green
+        return const Color(0xFF15803D);
       case DefectPriority.medium:
-        return const Color(0xFFB45309);   // amber
+        return const Color(0xFFB45309);
       case DefectPriority.high:
-        return const Color(0xFFDC2626);   // red
+        return const Color(0xFFDC2626);
     }
   }
 }

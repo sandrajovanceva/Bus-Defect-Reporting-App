@@ -12,13 +12,28 @@ class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   static const List<String> _days = [
-    'ПОНЕДЕЛНИК', 'ВТОРНИК', 'СРЕДА', 'ЧЕТВРТОК',
-    'ПЕТОК', 'САБОТА', 'НЕДЕЛА',
+    'ПОНЕДЕЛНИК',
+    'ВТОРНИК',
+    'СРЕДА',
+    'ЧЕТВРТОК',
+    'ПЕТОК',
+    'САБОТА',
+    'НЕДЕЛА',
   ];
 
   static const List<String> _months = [
-    'ЈАНУАРИ', 'ФЕВРУАРИ', 'МАРТ', 'АПРИЛ', 'МАЈ', 'ЈУНИ',
-    'ЈУЛИ', 'АВГУСТ', 'СЕПТЕМВРИ', 'ОКТОМВРИ', 'НОЕМВРИ', 'ДЕКЕМВРИ',
+    'ЈАНУАРИ',
+    'ФЕВРУАРИ',
+    'МАРТ',
+    'АПРИЛ',
+    'МАЈ',
+    'ЈУНИ',
+    'ЈУЛИ',
+    'АВГУСТ',
+    'СЕПТЕМВРИ',
+    'ОКТОМВРИ',
+    'НОЕМВРИ',
+    'ДЕКЕМВРИ',
   ];
 
   String _greeting(DateTime now) {
@@ -33,9 +48,14 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authProvider);
+    final authState = ref.watch(authProvider);
+    final user = authState.value;
     final theme = Theme.of(context);
     final now = DateTime.now();
+
+    if (authState.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     if (user == null) {
       WidgetsBinding.instance.addPostFrameCallback(
@@ -51,9 +71,9 @@ class HomeScreen extends ConsumerWidget {
           IconButton(
             tooltip: 'Одјави се',
             icon: const Icon(Icons.logout_rounded, size: 20),
-            onPressed: () {
-              ref.read(authProvider.notifier).logout();
-              context.go(AppRoutes.login);
+            onPressed: () async {
+              await ref.read(authProvider.notifier).logout();
+              if (context.mounted) context.go(AppRoutes.login);
             },
           ),
           const SizedBox(width: 8),
@@ -80,7 +100,11 @@ class HomeScreen extends ConsumerWidget {
 
                       Row(
                         children: [
-                          Container(width: 6, height: 6, color: AppColors.accent),
+                          Container(
+                            width: 6,
+                            height: 6,
+                            color: AppColors.accent,
+                          ),
                           const SizedBox(width: 10),
                           Text(
                             _greeting(now),
@@ -128,13 +152,15 @@ class HomeScreen extends ConsumerWidget {
                       ),
 
                       if (user.role.isDriver &&
-                          (user.assignedBus != null || user.assignedRoute != null)) ...[
+                          (user.assignedBus != null ||
+                              user.assignedRoute != null)) ...[
                         const SizedBox(height: 10),
                         _AssignmentInfo(user: user),
                       ],
                       const SizedBox(height: 28),
                       if (user.role.isDriver) ..._driverActions(context),
-                      if (user.role.isDispatcher) ..._dispatcherActions(context),
+                      if (user.role.isDispatcher)
+                        ..._dispatcherActions(context),
                     ],
                   ),
                 ),
@@ -158,40 +184,40 @@ class HomeScreen extends ConsumerWidget {
   }
 
   List<Widget> _driverActions(BuildContext context) => [
-        _ActionCard(
-          title: 'Пријави дефект',
-          subtitle: 'Поднеси нов извештај',
-          icon: Icons.add_rounded,
-          primary: true,
-          onTap: () => context.push(AppRoutes.defectReport),
-        ),
-        const SizedBox(height: 12),
-        _ActionCard(
-          title: 'Мои дефекти',
-          subtitle: 'Прегледај претходни извештаи',
-          icon: Icons.list_alt_rounded,
-          primary: false,
-          onTap: () => context.push(AppRoutes.myDefects),
-        ),
-      ];
+    _ActionCard(
+      title: 'Пријави дефект',
+      subtitle: 'Поднеси нов извештај',
+      icon: Icons.add_rounded,
+      primary: true,
+      onTap: () => context.push(AppRoutes.defectReport),
+    ),
+    const SizedBox(height: 12),
+    _ActionCard(
+      title: 'Мои дефекти',
+      subtitle: 'Прегледај претходни извештаи',
+      icon: Icons.list_alt_rounded,
+      primary: false,
+      onTap: () => context.push(AppRoutes.myDefects),
+    ),
+  ];
 
   List<Widget> _dispatcherActions(BuildContext context) => [
-        _ActionCard(
-          title: 'Сите дефекти',
-          subtitle: 'Прегледај сите пријавени дефекти',
-          icon: Icons.dashboard_rounded,
-          primary: true,
-          onTap: () => context.push(AppRoutes.myDefects),
-        ),
-        const SizedBox(height: 12),
-        _ActionCard(
-          title: 'Управување',
-          subtitle: 'Статуси, возачи и линии',
-          icon: Icons.tune_rounded,
-          primary: false,
-          onTap: () => context.push(AppRoutes.management),
-        ),
-      ];
+    _ActionCard(
+      title: 'Сите дефекти',
+      subtitle: 'Прегледај сите пријавени дефекти',
+      icon: Icons.dashboard_rounded,
+      primary: true,
+      onTap: () => context.push(AppRoutes.myDefects),
+    ),
+    const SizedBox(height: 12),
+    _ActionCard(
+      title: 'Управување',
+      subtitle: 'Статуси, возачи и линии',
+      icon: Icons.tune_rounded,
+      primary: false,
+      onTap: () => context.push(AppRoutes.management),
+    ),
+  ];
 }
 
 class _RoleBadge extends StatelessWidget {
@@ -271,10 +297,12 @@ class _ActionCard extends StatelessWidget {
     final theme = Theme.of(context);
     final bg = primary ? AppColors.accent : AppColors.surface;
     final fg = primary ? Colors.white : AppColors.textPrimary;
-    final subtleColor =
-        primary ? Colors.white.withValues(alpha: 0.82) : AppColors.textSecondary;
-    final iconBg =
-        primary ? Colors.white.withValues(alpha: 0.18) : AppColors.accentSurface;
+    final subtleColor = primary
+        ? Colors.white.withValues(alpha: 0.82)
+        : AppColors.textSecondary;
+    final iconBg = primary
+        ? Colors.white.withValues(alpha: 0.18)
+        : AppColors.accentSurface;
 
     return Material(
       color: Colors.transparent,
@@ -297,8 +325,10 @@ class _ActionCard extends StatelessWidget {
                   top: 0,
                   right: 0,
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.16),
                       borderRadius: const BorderRadius.only(

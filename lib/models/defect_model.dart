@@ -16,6 +16,8 @@ class DefectModel {
     required this.submittedAt,
     required this.submittedById,
     required this.submittedByName,
+    this.imageUrl,
+    this.updatedAt,
     this.history = const [],
   });
 
@@ -29,11 +31,14 @@ class DefectModel {
   final DateTime submittedAt;
   final String submittedById;
   final String submittedByName;
-
+  final String? imageUrl;
+  final DateTime? updatedAt;
   final List<DefectHistoryEntry> history;
 
   DefectModel copyWith({
     DefectStatus? status,
+    String? imageUrl,
+    DateTime? updatedAt,
     List<DefectHistoryEntry>? history,
   }) {
     return DefectModel(
@@ -47,6 +52,8 @@ class DefectModel {
       submittedAt: submittedAt,
       submittedById: submittedById,
       submittedByName: submittedByName,
+      imageUrl: imageUrl ?? this.imageUrl,
+      updatedAt: updatedAt ?? this.updatedAt,
       history: history ?? this.history,
     );
   }

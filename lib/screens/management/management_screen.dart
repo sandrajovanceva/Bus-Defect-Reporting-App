@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../models/defect_model.dart';
 import '../../models/maintenance_department.dart';
 import '../../services/defect_service.dart';
 import '../../widgets/status_pill.dart';
@@ -12,22 +13,47 @@ class ManagementScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final defects = ref.watch(defectProvider);
+    final defectsState = ref.watch(defectProvider);
+    final defects = defectsState.value ?? const <DefectModel>[];
 
-    // ── Status counts ──────────────────────────────────────────────
+    if (defectsState.isLoading && defects.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('MANAGEMENT'),
+          leading: IconButton(
+            tooltip: 'Back',
+            icon: const Icon(Icons.arrow_back_rounded, size: 20),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (defectsState.hasError && defects.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('MANAGEMENT'),
+          leading: IconButton(
+            tooltip: 'Back',
+            icon: const Icon(Icons.arrow_back_rounded, size: 20),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: Center(child: Text(defectsState.error.toString())),
+      );
+    }
     final statusCounts = {
       for (final s in DefectStatus.values)
         s: defects.where((d) => d.status == s).length,
     };
-
-    // ── Active = New + In Progress ─────────────────────────────────
     final active = defects
-        .where((d) =>
-            d.status == DefectStatus.newReport ||
-            d.status == DefectStatus.inProgress)
+        .where(
+          (d) =>
+              d.status == DefectStatus.newReport ||
+              d.status == DefectStatus.inProgress,
+        )
         .toList();
-
-    // ── Fleet: busNumber → {total, active} ─────────────────────────
     final Map<String, int> busTotal = {};
     final Map<String, int> busActive = {};
     for (final d in defects) {
@@ -39,8 +65,6 @@ class ManagementScreen extends ConsumerWidget {
     }
     final sortedBuses = busTotal.keys.toList()
       ..sort((a, b) => (busActive[b] ?? 0).compareTo(busActive[a] ?? 0));
-
-    // ── Department workload ────────────────────────────────────────
     final Map<MaintenanceDepartment, int> deptActive = {};
     final Map<MaintenanceDepartment, int> deptTotal = {};
     for (final d in defects) {
@@ -67,23 +91,19 @@ class ManagementScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
               children: [
-                // ── Overview ──────────────────────────────────────
                 const _SectionLabel(text: 'СТАТУС ПРЕГЛЕД'),
                 const SizedBox(height: 10),
-                _StatusGrid(
-                  statusCounts: statusCounts,
-                  total: defects.length,
-                ),
+                _StatusGrid(statusCounts: statusCounts, total: defects.length),
                 const SizedBox(height: 24),
-
-                // ── Fleet ─────────────────────────────────────────
                 Row(
                   children: [
                     const _SectionLabel(text: 'ФЛОТА'),
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.accentSurface,
                         borderRadius: BorderRadius.circular(2),
@@ -117,22 +137,22 @@ class ManagementScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // ── Departments ───────────────────────────────────
                 const _SectionLabel(text: 'ОДДЕЛИ'),
                 const SizedBox(height: 10),
                 _Card(
                   child: Column(
                     children: [
-                      for (int i = 0;
-                          i < MaintenanceDepartment.values.length;
-                          i++) ...[
+                      for (
+                        int i = 0;
+                        i < MaintenanceDepartment.values.length;
+                        i++
+                      ) ...[
                         if (i > 0)
                           const Divider(height: 1, color: AppColors.border),
                         _DeptRow(
                           dept: MaintenanceDepartment.values[i],
-                          active: deptActive[MaintenanceDepartment.values[i]] ??
-                              0,
+                          active:
+                              deptActive[MaintenanceDepartment.values[i]] ?? 0,
                           total:
                               deptTotal[MaintenanceDepartment.values[i]] ?? 0,
                         ),
@@ -149,15 +169,8 @@ class ManagementScreen extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Status grid
-// ─────────────────────────────────────────────────────────────────
-
 class _StatusGrid extends StatelessWidget {
-  const _StatusGrid({
-    required this.statusCounts,
-    required this.total,
-  });
+  const _StatusGrid({required this.statusCounts, required this.total});
 
   final Map<DefectStatus, int> statusCounts;
   final int total;
@@ -165,18 +178,30 @@ class _StatusGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      (DefectStatus.newReport, 'New', statusCounts[DefectStatus.newReport] ?? 0),
-      (DefectStatus.inProgress, 'In Progress',
-          statusCounts[DefectStatus.inProgress] ?? 0),
-      (DefectStatus.resolved, 'Resolved',
-          statusCounts[DefectStatus.resolved] ?? 0),
-      (DefectStatus.rejected, 'Rejected',
-          statusCounts[DefectStatus.rejected] ?? 0),
+      (
+        DefectStatus.newReport,
+        'New',
+        statusCounts[DefectStatus.newReport] ?? 0,
+      ),
+      (
+        DefectStatus.inProgress,
+        'In Progress',
+        statusCounts[DefectStatus.inProgress] ?? 0,
+      ),
+      (
+        DefectStatus.resolved,
+        'Resolved',
+        statusCounts[DefectStatus.resolved] ?? 0,
+      ),
+      (
+        DefectStatus.rejected,
+        'Rejected',
+        statusCounts[DefectStatus.rejected] ?? 0,
+      ),
     ];
 
     return Column(
       children: [
-        // Total pill at top
         _Card(
           child: Row(
             children: [
@@ -212,20 +237,43 @@ class _StatusGrid extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        // 2-column grid
         Row(
           children: [
-            Expanded(child: _StatCard(status: items[0].$1, label: items[0].$2, count: items[0].$3)),
+            Expanded(
+              child: _StatCard(
+                status: items[0].$1,
+                label: items[0].$2,
+                count: items[0].$3,
+              ),
+            ),
             const SizedBox(width: 8),
-            Expanded(child: _StatCard(status: items[1].$1, label: items[1].$2, count: items[1].$3)),
+            Expanded(
+              child: _StatCard(
+                status: items[1].$1,
+                label: items[1].$2,
+                count: items[1].$3,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(child: _StatCard(status: items[2].$1, label: items[2].$2, count: items[2].$3)),
+            Expanded(
+              child: _StatCard(
+                status: items[2].$1,
+                label: items[2].$2,
+                count: items[2].$3,
+              ),
+            ),
             const SizedBox(width: 8),
-            Expanded(child: _StatCard(status: items[3].$1, label: items[3].$2, count: items[3].$3)),
+            Expanded(
+              child: _StatCard(
+                status: items[3].$1,
+                label: items[3].$2,
+                count: items[3].$3,
+              ),
+            ),
           ],
         ),
       ],
@@ -282,10 +330,6 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Fleet row
-// ─────────────────────────────────────────────────────────────────
-
 class _BusRow extends StatelessWidget {
   const _BusRow({
     required this.busNumber,
@@ -300,8 +344,9 @@ class _BusRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasActive = active > 0;
-    final statusColor =
-        hasActive ? AppColors.statusNew : AppColors.statusResolved;
+    final statusColor = hasActive
+        ? AppColors.statusNew
+        : AppColors.statusResolved;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -345,10 +390,8 @@ class _BusRow extends StatelessWidget {
               ],
             ),
           ),
-          // Active defect badge
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: statusColor.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(2),
@@ -369,10 +412,6 @@ class _BusRow extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────
-// Department row
-// ─────────────────────────────────────────────────────────────────
 
 class _DeptRow extends StatelessWidget {
   const _DeptRow({
@@ -433,7 +472,6 @@ class _DeptRow extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          // Progress bar
           ClipRRect(
             borderRadius: BorderRadius.circular(2),
             child: LinearProgressIndicator(
@@ -450,9 +488,7 @@ class _DeptRow extends StatelessWidget {
                 : 'Нема активни дефекти',
             style: TextStyle(
               fontSize: 10,
-              color: active > 0
-                  ? AppColors.textSecondary
-                  : AppColors.textMuted,
+              color: active > 0 ? AppColors.textSecondary : AppColors.textMuted,
             ),
           ),
         ],
@@ -460,10 +496,6 @@ class _DeptRow extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────
-// Shared primitives
-// ─────────────────────────────────────────────────────────────────
 
 class _SectionLabel extends StatelessWidget {
   const _SectionLabel({required this.text});
@@ -474,9 +506,9 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: AppColors.textMuted,
-            letterSpacing: 1.4,
-          ),
+        color: AppColors.textMuted,
+        letterSpacing: 1.4,
+      ),
     );
   }
 }

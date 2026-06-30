@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 
 class SectionHeader extends StatelessWidget {
-  const SectionHeader({
-    super.key,
-    required this.title,
-    this.trailing,
-  });
+  const SectionHeader({super.key, required this.title, this.trailing});
 
   final String title;
   final Widget? trailing;
@@ -30,22 +26,12 @@ class SectionHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          Text(
-            title.toUpperCase(),
-            style: theme.textTheme.labelLarge,
-          ),
+          Text(title.toUpperCase(), style: theme.textTheme.labelLarge),
           const SizedBox(width: 12),
           const Expanded(
-            child: Divider(
-              color: AppColors.border,
-              thickness: 1,
-              height: 1,
-            ),
+            child: Divider(color: AppColors.border, thickness: 1, height: 1),
           ),
-          if (trailing != null) ...[
-            const SizedBox(width: 12),
-            trailing!,
-          ],
+          if (trailing != null) ...[const SizedBox(width: 12), trailing!],
         ],
       ),
     );

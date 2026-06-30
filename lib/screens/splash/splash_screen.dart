@@ -1,27 +1,33 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_theme.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/widgets.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      context.go(AppRoutes.login);
-    });
+    unawaited(_routeAfterStartup());
+  }
+
+  Future<void> _routeAfterStartup() async {
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+    final user = await ref.read(authProvider.future).catchError((_) => null);
+    if (!mounted) return;
+    context.go(user == null ? AppRoutes.login : AppRoutes.home);
   }
 
   @override
@@ -75,7 +81,7 @@ class _SplashScreenState extends State<SplashScreen> {
             bottom: 32,
             child: Center(
               child: Text(
-                'V1.0.0  ·  BUILD 2026.04',
+                'V1.0.0  /  BUILD 2026.04',
                 style: theme.textTheme.labelSmall,
               ),
             ),
@@ -91,10 +97,7 @@ class _GridBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size.infinite,
-      painter: _GridPainter(),
-    );
+    return CustomPaint(size: Size.infinite, painter: _GridPainter());
   }
 }
 

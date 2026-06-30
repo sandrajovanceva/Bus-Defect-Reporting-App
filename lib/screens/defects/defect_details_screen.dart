@@ -6,7 +6,6 @@ import '../../core/theme/app_theme.dart';
 import '../../models/defect_history_entry.dart';
 import '../../models/defect_model.dart';
 import '../../models/defect_type.dart';
-import '../../models/user_role.dart';
 import '../../services/auth_service.dart';
 import '../../services/defect_service.dart';
 import '../../widgets/status_pill.dart';
@@ -23,9 +22,37 @@ class DefectDetailsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authProvider);
-    final defects = ref.watch(defectProvider);
+    final authState = ref.watch(authProvider);
+    final user = authState.value;
+    final defectsState = ref.watch(defectProvider);
+    final defects = defectsState.value ?? const <DefectModel>[];
     final defect = defects.where((d) => d.id == defectId).firstOrNull;
+
+    if (authState.isLoading || defectsState.isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('DETAILS'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded, size: 20),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (defectsState.hasError && defects.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('DETAILS'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded, size: 20),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: Center(child: Text(defectsState.error.toString())),
+      );
+    }
 
     if (defect == null) {
       return Scaffold(
@@ -60,7 +87,6 @@ class DefectDetailsScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
               children: [
-
                 _InfoCard(
                   children: [
                     Row(
@@ -71,13 +97,19 @@ class DefectDetailsScreen extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(height: 14),
-                    _Row(label: 'Автобус', value: 'Автобус #${defect.busNumber}'),
+                    _Row(
+                      label: 'Автобус',
+                      value: 'Автобус #${defect.busNumber}',
+                    ),
                     const SizedBox(height: 8),
                     _Row(label: 'Тип', value: defect.type.label),
                     const SizedBox(height: 8),
                     _Row(label: 'Оддел', value: defect.department.label),
                     const SizedBox(height: 8),
-                    _Row(label: 'Поднесено', value: _formatDate(defect.submittedAt)),
+                    _Row(
+                      label: 'Поднесено',
+                      value: _formatDate(defect.submittedAt),
+                    ),
                     const SizedBox(height: 8),
                     _Row(label: 'Возач', value: defect.submittedByName),
                   ],
@@ -89,9 +121,9 @@ class DefectDetailsScreen extends ConsumerWidget {
                   children: [
                     Text(
                       defect.description,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            height: 1.5,
-                          ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(height: 1.5),
                     ),
                   ],
                 ),
@@ -99,7 +131,10 @@ class DefectDetailsScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
                   _SectionLabel(text: 'ПРОМЕНИ СТАТУС'),
                   const SizedBox(height: 10),
-                  _StatusUpdatePanel(defect: defect, dispatcherName: dispatcherName),
+                  _StatusUpdatePanel(
+                    defect: defect,
+                    dispatcherName: dispatcherName,
+                  ),
                 ],
                 if (!isDispatcher) ...[
                   const SizedBox(height: 20),
@@ -120,7 +155,6 @@ class DefectDetailsScreen extends ConsumerWidget {
   }
 }
 
-
 class _StatusUpdatePanel extends ConsumerWidget {
   const _StatusUpdatePanel({
     required this.defect,
@@ -131,7 +165,7 @@ class _StatusUpdatePanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(defectProvider.notifier);
+    final repository = ref.read(defectRepositoryProvider);
 
     final options = [
       (DefectStatus.newReport, 'New'),
@@ -154,7 +188,13 @@ class _StatusUpdatePanel extends ConsumerWidget {
               borderRadius: BorderRadius.circular(4),
               onTap: isSelected
                   ? null
-                  : () => notifier.updateStatus(defect.id, status, byName: dispatcherName),
+                  : () async {
+                      await repository.updateStatus(
+                        defectId: defect.id,
+                        status: status,
+                        changedByName: dispatcherName,
+                      );
+                    },
               child: Ink(
                 decoration: BoxDecoration(
                   color: isSelected
@@ -185,9 +225,7 @@ class _StatusUpdatePanel extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           label,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
+                          style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 color: isSelected
                                     ? color
@@ -229,14 +267,19 @@ class _ReadOnlyNotice extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline_rounded,
-              size: 16, color: AppColors.textMuted),
+          const Icon(
+            Icons.info_outline_rounded,
+            size: 16,
+            color: AppColors.textMuted,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Само диспечерот може да го менува статусот на извештајот.',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: AppColors.textSecondary, height: 1.4),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
             ),
           ),
         ],
@@ -310,9 +353,9 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: AppColors.textMuted,
-            letterSpacing: 1.4,
-          ),
+        color: AppColors.textMuted,
+        letterSpacing: 1.4,
+      ),
     );
   }
 }
@@ -353,7 +396,6 @@ class _HistoryTimeline extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               SizedBox(
                 width: 28,
                 child: Column(
@@ -366,8 +408,11 @@ class _HistoryTimeline extends StatelessWidget {
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.border),
                       ),
-                      child: Icon(_icon(entry.type),
-                          size: 14, color: AppColors.textSecondary),
+                      child: Icon(
+                        _icon(entry.type),
+                        size: 14,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     if (!isLast)
                       Expanded(
@@ -438,11 +483,11 @@ class _PriorityChip extends StatelessWidget {
           Text(
             defect.priority.labelEn,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: color,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                ),
+              color: color,
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.2,
+            ),
           ),
         ],
       ),

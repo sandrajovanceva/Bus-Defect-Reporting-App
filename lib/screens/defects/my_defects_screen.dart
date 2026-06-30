@@ -7,11 +7,9 @@ import '../../core/theme/app_theme.dart';
 import '../../models/defect_model.dart';
 import '../../models/defect_priority.dart';
 import '../../models/defect_type.dart';
-import '../../models/user_role.dart';
 import '../../services/auth_service.dart';
 import '../../services/defect_service.dart';
 import '../../widgets/status_pill.dart';
-
 
 class _FilterState {
   const _FilterState({
@@ -27,7 +25,10 @@ class _FilterState {
   final String busNumber;
 
   bool get isActive =>
-      status != null || type != null || priority != null || busNumber.isNotEmpty;
+      status != null ||
+      type != null ||
+      priority != null ||
+      busNumber.isNotEmpty;
 
   _FilterState copyWith({
     Object? status = _sentinel,
@@ -38,7 +39,9 @@ class _FilterState {
     return _FilterState(
       status: status == _sentinel ? this.status : status as DefectStatus?,
       type: type == _sentinel ? this.type : type as DefectType?,
-      priority: priority == _sentinel ? this.priority : priority as DefectPriority?,
+      priority: priority == _sentinel
+          ? this.priority
+          : priority as DefectPriority?,
       busNumber: busNumber ?? this.busNumber,
     );
   }
@@ -58,7 +61,6 @@ class _FilterState {
 }
 
 const _sentinel = Object();
-
 
 class MyDefectsScreen extends ConsumerStatefulWidget {
   const MyDefectsScreen({super.key});
@@ -84,8 +86,10 @@ class _MyDefectsScreenState extends ConsumerState<MyDefectsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(authProvider);
-    final allDefects = ref.watch(defectProvider);
+    final authState = ref.watch(authProvider);
+    final user = authState.value;
+    final defectsState = ref.watch(defectProvider);
+    final allDefects = defectsState.value ?? const <DefectModel>[];
     final isDispatcher = user?.role.isDispatcher ?? false;
 
     final base = isDispatcher
@@ -128,22 +132,25 @@ class _MyDefectsScreenState extends ConsumerState<MyDefectsScreen> {
             onChanged: (f) => setState(() => _filter = f),
           ),
           Expanded(
-            child: defects.isEmpty
-                ? _EmptyState(isFiltered: _filter.isActive)
-                : ListView.separated(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: defects.length,
-                    separatorBuilder: (_, __) =>
-                        const Divider(height: 1, color: AppColors.border),
-                    itemBuilder: (_, i) => _DefectTile(defect: defects[i]),
-                  ),
+            child: defectsState.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => _LoadError(message: error.toString()),
+              data: (_) => defects.isEmpty
+                  ? _EmptyState(isFiltered: _filter.isActive)
+                  : ListView.separated(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: defects.length,
+                      separatorBuilder: (_, __) =>
+                          const Divider(height: 1, color: AppColors.border),
+                      itemBuilder: (_, i) => _DefectTile(defect: defects[i]),
+                    ),
+            ),
           ),
         ],
       ),
     );
   }
 }
-
 
 class _FilterBar extends StatelessWidget {
   const _FilterBar({
@@ -174,10 +181,14 @@ class _FilterBar extends StatelessWidget {
               style: theme.textTheme.bodySmall,
               decoration: InputDecoration(
                 hintText: 'Пребарај по број на автобус…',
-                hintStyle: theme.textTheme.bodySmall
-                    ?.copyWith(color: AppColors.textMuted),
-                prefixIcon: const Icon(Icons.search_rounded,
-                    size: 18, color: AppColors.textMuted),
+                hintStyle: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.textMuted,
+                ),
+                prefixIcon: const Icon(
+                  Icons.search_rounded,
+                  size: 18,
+                  color: AppColors.textMuted,
+                ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 8),
                 filled: true,
                 fillColor: AppColors.surfaceElevated,
@@ -191,8 +202,10 @@ class _FilterBar extends StatelessWidget {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(4),
-                  borderSide:
-                      const BorderSide(color: AppColors.accent, width: 1.5),
+                  borderSide: const BorderSide(
+                    color: AppColors.accent,
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -208,9 +221,7 @@ class _FilterBar extends StatelessWidget {
                     selected: filter.status == s,
                     color: s.color,
                     onTap: () => onChanged(
-                      filter.copyWith(
-                        status: filter.status == s ? null : s,
-                      ),
+                      filter.copyWith(status: filter.status == s ? null : s),
                     ),
                   ),
                 ),
@@ -278,7 +289,9 @@ class _FilterChip extends StatelessWidget {
           duration: const Duration(milliseconds: 120),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: selected ? c.withValues(alpha: 0.12) : AppColors.surfaceElevated,
+            color: selected
+                ? c.withValues(alpha: 0.12)
+                : AppColors.surfaceElevated,
             borderRadius: BorderRadius.circular(2),
             border: Border.all(
               color: selected ? c : AppColors.border,
@@ -305,13 +318,12 @@ class _Divider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 1,
-        height: 18,
-        color: AppColors.border,
-        margin: const EdgeInsets.only(right: 8),
-      );
+    width: 1,
+    height: 18,
+    color: AppColors.border,
+    margin: const EdgeInsets.only(right: 8),
+  );
 }
-
 
 class _DefectTile extends StatelessWidget {
   const _DefectTile({required this.defect});
@@ -339,8 +351,11 @@ class _DefectTile extends StatelessWidget {
                 color: AppColors.surfaceElevated,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: Icon(defect.type.icon, size: 20,
-                  color: AppColors.textSecondary),
+              child: Icon(
+                defect.type.icon,
+                size: 20,
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -359,16 +374,18 @@ class _DefectTile extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         '· Автобус #${defect.busNumber}',
-                        style: theme.textTheme.labelSmall
-                            ?.copyWith(color: AppColors.textSecondary),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     defect.type.label,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: AppColors.textPrimary),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Row(
@@ -387,8 +404,11 @@ class _DefectTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded,
-                size: 20, color: AppColors.textMuted),
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: AppColors.textMuted,
+            ),
           ],
         ),
       ),
@@ -396,6 +416,27 @@ class _DefectTile extends StatelessWidget {
   }
 }
 
+class _LoadError extends StatelessWidget {
+  const _LoadError({required this.message});
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          message,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: AppColors.statusNew,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+}
 
 class _EmptyState extends StatelessWidget {
   const _EmptyState({required this.isFiltered});
@@ -418,8 +459,9 @@ class _EmptyState extends StatelessWidget {
             isFiltered
                 ? 'Нема дефекти за избраните филтри'
                 : 'Нема пријавени дефекти',
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: AppColors.textSecondary),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),

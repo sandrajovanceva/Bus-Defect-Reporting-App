@@ -1,4 +1,9 @@
-enum HistoryChangeType { created, statusChange, priorityChange, departmentChange }
+enum HistoryChangeType {
+  created,
+  statusChange,
+  priorityChange,
+  departmentChange,
+}
 
 class DefectHistoryEntry {
   const DefectHistoryEntry({

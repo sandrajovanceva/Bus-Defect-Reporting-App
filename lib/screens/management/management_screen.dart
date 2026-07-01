@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/defect_model.dart';
 import '../../models/maintenance_department.dart';
 import '../../services/defect_service.dart';
@@ -15,13 +16,14 @@ class ManagementScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final defectsState = ref.watch(defectProvider);
     final defects = defectsState.value ?? const <DefectModel>[];
+    final t = AppLocalizations.of(context);
 
     if (defectsState.isLoading && defects.isEmpty) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('MANAGEMENT'),
+          title: Text(t.managementTitle),
           leading: IconButton(
-            tooltip: 'Back',
+            tooltip: t.actionBack,
             icon: const Icon(Icons.arrow_back_rounded, size: 20),
             onPressed: () => context.pop(),
           ),
@@ -33,9 +35,9 @@ class ManagementScreen extends ConsumerWidget {
     if (defectsState.hasError && defects.isEmpty) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('MANAGEMENT'),
+          title: Text(t.managementTitle),
           leading: IconButton(
-            tooltip: 'Back',
+            tooltip: t.actionBack,
             icon: const Icon(Icons.arrow_back_rounded, size: 20),
             onPressed: () => context.pop(),
           ),
@@ -76,9 +78,9 @@ class ManagementScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('УПРАВУВАЊЕ'),
+        title: Text(t.managementTitle),
         leading: IconButton(
-          tooltip: 'Назад',
+          tooltip: t.actionBack,
           icon: const Icon(Icons.arrow_back_rounded, size: 20),
           onPressed: () => context.pop(),
         ),
@@ -91,13 +93,13 @@ class ManagementScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
               children: [
-                const _SectionLabel(text: 'СТАТУС ПРЕГЛЕД'),
+                _SectionLabel(text: t.mgmtStatusOverview),
                 const SizedBox(height: 10),
                 _StatusGrid(statusCounts: statusCounts, total: defects.length),
                 const SizedBox(height: 24),
                 Row(
                   children: [
-                    const _SectionLabel(text: 'ФЛОТА'),
+                    _SectionLabel(text: t.mgmtFleet),
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -109,7 +111,7 @@ class ManagementScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(2),
                       ),
                       child: Text(
-                        '${sortedBuses.length} автобуси',
+                        t.mgmtBuses(sortedBuses.length),
                         style: const TextStyle(
                           fontSize: 10,
                           color: AppColors.accent,
@@ -137,7 +139,7 @@ class ManagementScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const _SectionLabel(text: 'ОДДЕЛИ'),
+                _SectionLabel(text: t.mgmtDepartments),
                 const SizedBox(height: 10),
                 _Card(
                   child: Column(
@@ -177,25 +179,26 @@ class _StatusGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final items = [
       (
         DefectStatus.newReport,
-        'New',
+        t.statusNew,
         statusCounts[DefectStatus.newReport] ?? 0,
       ),
       (
         DefectStatus.inProgress,
-        'In Progress',
+        t.statusInProgress,
         statusCounts[DefectStatus.inProgress] ?? 0,
       ),
       (
         DefectStatus.resolved,
-        'Resolved',
+        t.statusResolved,
         statusCounts[DefectStatus.resolved] ?? 0,
       ),
       (
         DefectStatus.rejected,
-        'Rejected',
+        t.statusRejected,
         statusCounts[DefectStatus.rejected] ?? 0,
       ),
     ];
@@ -218,9 +221,9 @@ class _StatusGrid extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  const Text(
-                    'вкупно дефекти',
-                    style: TextStyle(
+                  Text(
+                    t.mgmtTotalDefects,
+                    style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
@@ -343,6 +346,7 @@ class _BusRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final hasActive = active > 0;
     final statusColor = hasActive
         ? AppColors.statusNew
@@ -372,7 +376,7 @@ class _BusRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Автобус #$busNumber',
+                  t.busNumbered(busNumber),
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -381,7 +385,7 @@ class _BusRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '$total дефект${total == 1 ? '' : 'и'} вкупно',
+                  t.mgmtBusTotal(total),
                   style: const TextStyle(
                     fontSize: 11,
                     color: AppColors.textSecondary,
@@ -398,7 +402,7 @@ class _BusRow extends StatelessWidget {
               border: Border.all(color: statusColor.withValues(alpha: 0.35)),
             ),
             child: Text(
-              hasActive ? '$active активни' : 'Уредно',
+              hasActive ? t.mgmtBusActive(active) : t.mgmtBusOk,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
@@ -439,6 +443,7 @@ class _DeptRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final fraction = total == 0 ? 0.0 : active / total;
     final barColor = active > 0 ? AppColors.accent : AppColors.border;
 
@@ -453,7 +458,7 @@ class _DeptRow extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  dept.label,
+                  dept.label(t),
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -483,9 +488,7 @@ class _DeptRow extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            active > 0
-                ? '$active активн${active == 1 ? 'и' : 'и'} дефект${active == 1 ? '' : 'и'}'
-                : 'Нема активни дефекти',
+            active > 0 ? t.mgmtDeptActive(active) : t.mgmtDeptNone,
             style: TextStyle(
               fontSize: 10,
               color: active > 0 ? AppColors.textSecondary : AppColors.textMuted,

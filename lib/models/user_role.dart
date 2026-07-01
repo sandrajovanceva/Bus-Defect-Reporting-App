@@ -1,13 +1,15 @@
+import '../l10n/app_localizations.dart';
+
 enum UserRole {
   driver,
   dispatcher;
 
-  String get label {
+  String label(AppLocalizations t) {
     switch (this) {
       case UserRole.driver:
-        return 'ВОЗАЧ';
+        return t.roleDriver;
       case UserRole.dispatcher:
-        return 'ДИСПЕЧЕР';
+        return t.roleDispatcher;
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/defect_model.dart';
 import '../../models/defect_type.dart';
 import '../../services/auth_service.dart';
@@ -17,6 +18,7 @@ class DefectMapScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final authState = ref.watch(authProvider);
     final user = authState.value;
     final defectsState = ref.watch(defectProvider);
@@ -30,9 +32,9 @@ class DefectMapScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('МАПА НА ДЕФЕКТИ'),
+        title: Text(t.mapTitle),
         leading: IconButton(
-          tooltip: 'Назад',
+          tooltip: t.actionBack,
           icon: const Icon(Icons.arrow_back_rounded, size: 20),
           onPressed: () => context.pop(),
         ),
@@ -44,9 +46,9 @@ class DefectMapScreen extends ConsumerWidget {
           message: error.toString(),
         ),
         data: (_) => located.isEmpty
-            ? const _MapMessage(
+            ? _MapMessage(
                 icon: Icons.location_off_outlined,
-                message: 'Нема дефекти со зачувана локација.',
+                message: t.mapNoLocation,
               )
             : _DefectMap(located: located),
       ),
@@ -114,11 +116,12 @@ class _DefectMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final color = defect.status.color;
     return GestureDetector(
       onTap: () => context.push(AppRoutes.defectDetails(defect.id)),
       child: Tooltip(
-        message: 'Автобус #${defect.busNumber} · ${defect.type.label}',
+        message: t.mapTooltip(defect.busNumber, defect.type.label(t)),
         child: Icon(
           Icons.location_on,
           color: color,
@@ -138,6 +141,7 @@ class _MapLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
@@ -158,7 +162,7 @@ class _MapLegend extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              '$count ${count == 1 ? 'дефект' : 'дефекти'} на мапата · допрете маркер за детали',
+              t.mapLegend(count),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
               ),

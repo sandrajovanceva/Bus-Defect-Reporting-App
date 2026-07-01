@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/defect_history_entry.dart';
 import '../../models/defect_model.dart';
 import '../../models/defect_type.dart';
@@ -27,11 +28,12 @@ class DefectDetailsScreen extends ConsumerWidget {
     final defectsState = ref.watch(defectProvider);
     final defects = defectsState.value ?? const <DefectModel>[];
     final defect = defects.where((d) => d.id == defectId).firstOrNull;
+    final t = AppLocalizations.of(context);
 
     if (authState.isLoading || defectsState.isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('DETAILS'),
+          title: Text(t.detailsTitle),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded, size: 20),
             onPressed: () => context.pop(),
@@ -44,7 +46,7 @@ class DefectDetailsScreen extends ConsumerWidget {
     if (defectsState.hasError && defects.isEmpty) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('DETAILS'),
+          title: Text(t.detailsTitle),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded, size: 20),
             onPressed: () => context.pop(),
@@ -57,24 +59,23 @@ class DefectDetailsScreen extends ConsumerWidget {
     if (defect == null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('ДЕТАЛИ'),
+          title: Text(t.detailsTitle),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded, size: 20),
             onPressed: () => context.pop(),
           ),
         ),
-        body: const Center(child: Text('Дефектот не е пронајден.')),
+        body: Center(child: Text(t.detailsNotFound)),
       );
     }
 
     final isDispatcher = user?.role.isDispatcher ?? false;
-    final dispatcherName = user?.fullName ?? 'Диспечер';
 
     return Scaffold(
       appBar: AppBar(
         title: Text(defect.id),
         leading: IconButton(
-          tooltip: 'Назад',
+          tooltip: t.actionBack,
           icon: const Icon(Icons.arrow_back_rounded, size: 20),
           onPressed: () => context.pop(),
         ),
@@ -98,24 +99,27 @@ class DefectDetailsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 14),
                     _Row(
-                      label: 'Автобус',
-                      value: 'Автобус #${defect.busNumber}',
+                      label: t.labelBus,
+                      value: t.busNumbered(defect.busNumber),
                     ),
                     const SizedBox(height: 8),
-                    _Row(label: 'Тип', value: defect.type.label),
-                    const SizedBox(height: 8),
-                    _Row(label: 'Оддел', value: defect.department.label),
+                    _Row(label: t.labelType, value: defect.type.label(t)),
                     const SizedBox(height: 8),
                     _Row(
-                      label: 'Поднесено',
+                      label: t.labelDepartment,
+                      value: defect.department.label(t),
+                    ),
+                    const SizedBox(height: 8),
+                    _Row(
+                      label: t.labelSubmitted,
                       value: _formatDate(defect.submittedAt),
                     ),
                     const SizedBox(height: 8),
-                    _Row(label: 'Возач', value: defect.submittedByName),
+                    _Row(label: t.labelDriver, value: defect.submittedByName),
                     if (defect.hasLocation) ...[
                       const SizedBox(height: 8),
                       _Row(
-                        label: 'Локација',
+                        label: t.labelLocation,
                         value:
                             '${defect.latitude!.toStringAsFixed(5)}, '
                             '${defect.longitude!.toStringAsFixed(5)}',
@@ -124,7 +128,7 @@ class DefectDetailsScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                _SectionLabel(text: 'ОПИС'),
+                _SectionLabel(text: t.sectionDescription),
                 const SizedBox(height: 8),
                 _InfoCard(
                   children: [
@@ -138,12 +142,9 @@ class DefectDetailsScreen extends ConsumerWidget {
                 ),
                 if (isDispatcher) ...[
                   const SizedBox(height: 24),
-                  _SectionLabel(text: 'ПРОМЕНИ СТАТУС'),
+                  _SectionLabel(text: t.sectionChangeStatus),
                   const SizedBox(height: 10),
-                  _StatusUpdatePanel(
-                    defect: defect,
-                    dispatcherName: dispatcherName,
-                  ),
+                  _StatusUpdatePanel(defect: defect),
                 ],
                 if (!isDispatcher) ...[
                   const SizedBox(height: 20),
@@ -151,7 +152,7 @@ class DefectDetailsScreen extends ConsumerWidget {
                 ],
                 if (defect.history.isNotEmpty) ...[
                   const SizedBox(height: 24),
-                  _SectionLabel(text: 'ИСТОРИЈА НА ПРОМЕНИ'),
+                  _SectionLabel(text: t.sectionHistory),
                   const SizedBox(height: 10),
                   _HistoryTimeline(entries: defect.history),
                 ],
@@ -165,22 +166,19 @@ class DefectDetailsScreen extends ConsumerWidget {
 }
 
 class _StatusUpdatePanel extends ConsumerWidget {
-  const _StatusUpdatePanel({
-    required this.defect,
-    required this.dispatcherName,
-  });
+  const _StatusUpdatePanel({required this.defect});
   final DefectModel defect;
-  final String dispatcherName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final repository = ref.read(defectRepositoryProvider);
+    final t = AppLocalizations.of(context);
 
     final options = [
-      (DefectStatus.newReport, 'New'),
-      (DefectStatus.inProgress, 'In Progress'),
-      (DefectStatus.resolved, 'Resolved'),
-      (DefectStatus.rejected, 'Rejected'),
+      (DefectStatus.newReport, t.statusNew),
+      (DefectStatus.inProgress, t.statusInProgress),
+      (DefectStatus.resolved, t.statusResolved),
+      (DefectStatus.rejected, t.statusRejected),
     ];
 
     return Column(
@@ -201,8 +199,8 @@ class _StatusUpdatePanel extends ConsumerWidget {
                       await repository.updateStatus(
                         defectId: defect.id,
                         status: status,
-                        changedByName: dispatcherName,
                       );
+                      ref.invalidate(defectProvider);
                     },
               child: Ink(
                 decoration: BoxDecoration(
@@ -284,7 +282,7 @@ class _ReadOnlyNotice extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Само диспечерот може да го менува статусот на извештајот.',
+              AppLocalizations.of(context).readOnlyNotice,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: AppColors.textSecondary,
                 height: 1.4,

@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bus_defect_reporting_app/models/defect_priority.dart';
@@ -7,44 +6,63 @@ import 'package:bus_defect_reporting_app/services/defect_service.dart';
 import 'package:bus_defect_reporting_app/widgets/status_pill.dart';
 
 void main() {
-  test('buildCreateData creates the Firestore defect document shape', () {
+  test('buildCreatePayload maps a draft to the API request body', () {
     const draft = DefectDraft(
-      userId: 'user-123',
-      userName: 'Test Driver',
       busNumber: ' 412 ',
       type: DefectType.brakes,
       priority: DefectPriority.high,
       description: ' Brake pedal feels soft. ',
-      imageUrl: 'https://storage.example/defect.jpg',
+      imageBase64: 'abc123',
       latitude: 41.9981,
       longitude: 21.4254,
     );
 
-    final data = DefectRepository.buildCreateData(
-      draft: draft,
-      defectId: 'defect-123',
-    );
+    final payload = DefectRepository.buildCreatePayload(draft);
 
-    expect(data['id'], 'defect-123');
-    expect(data['userId'], 'user-123');
-    expect(data['submittedById'], 'user-123');
-    expect(data['submittedByName'], 'Test Driver');
-    expect(data['title'], 'brakes defect on bus 412');
-    expect(data['description'], 'Brake pedal feels soft.');
-    expect(data['busNumber'], '412');
-    expect(data['type'], DefectType.brakes.name);
-    expect(data['priority'], DefectPriority.high.name);
-    expect(data['department'], DefectType.brakes.department.name);
-    expect(data['status'], DefectStatus.newReport.name);
-    expect(data['imageUrl'], 'https://storage.example/defect.jpg');
-    expect(data['latitude'], 41.9981);
-    expect(data['longitude'], 21.4254);
-    expect(data['createdAt'], isA<FieldValue>());
-    expect(data['updatedAt'], isA<FieldValue>());
+    expect(payload['bus_number'], '412');
+    expect(payload['type'], DefectType.brakes.name);
+    expect(payload['priority'], DefectPriority.high.name);
+    expect(payload['description'], 'Brake pedal feels soft.');
+    expect(payload['image_base64'], 'abc123');
+    expect(payload['latitude'], 41.9981);
+    expect(payload['longitude'], 21.4254);
+  });
 
-    final history = data['history'] as List<Object?>;
-    expect(history, hasLength(1));
-    expect(history.single, isA<Map<String, Object?>>());
-    expect(history.single, containsPair('description', 'Report submitted.'));
+  test('parseDefect builds a model from the API response', () {
+    final defect = DefectRepository.parseDefect({
+      'id': 'D-ABC123',
+      'bus_number': '412',
+      'type': 'brakes',
+      'priority': 'high',
+      'status': 'inProgress',
+      'description': 'Brake pedal feels soft.',
+      'department': 'mechanical',
+      'submitted_by_id': 'user-123',
+      'submitted_by_name': 'Test Driver',
+      'latitude': 41.9981,
+      'longitude': 21.4254,
+      'created_at': '2026-07-01T10:00:00',
+      'updated_at': '2026-07-01T10:00:00',
+      'history': [
+        {
+          'type': 'created',
+          'description': 'Report submitted.',
+          'changed_by_name': 'Test Driver',
+          'changed_at': '2026-07-01T10:00:00',
+        },
+      ],
+    });
+
+    expect(defect.id, 'D-ABC123');
+    expect(defect.busNumber, '412');
+    expect(defect.type, DefectType.brakes);
+    expect(defect.priority, DefectPriority.high);
+    expect(defect.status, DefectStatus.inProgress);
+    expect(defect.submittedById, 'user-123');
+    expect(defect.submittedByName, 'Test Driver');
+    expect(defect.hasLocation, isTrue);
+    expect(defect.latitude, 41.9981);
+    expect(defect.history, hasLength(1));
+    expect(defect.history.single.description, 'Report submitted.');
   });
 }

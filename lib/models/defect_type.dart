@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import 'maintenance_department.dart';
 
 enum DefectType {
@@ -14,24 +15,24 @@ enum DefectType {
 }
 
 extension DefectTypeX on DefectType {
-  String get label {
+  String label(AppLocalizations t) {
     switch (this) {
       case DefectType.electrical:
-        return 'Електрика';
+        return t.typeElectrical;
       case DefectType.mechanical:
-        return 'Механика';
+        return t.typeMechanical;
       case DefectType.doors:
-        return 'Врати';
+        return t.typeDoors;
       case DefectType.brakes:
-        return 'Кочници';
+        return t.typeBrakes;
       case DefectType.lights:
-        return 'Светла';
+        return t.typeLights;
       case DefectType.climate:
-        return 'Греење / климатизација';
+        return t.typeClimate;
       case DefectType.bodywork:
-        return 'Каросерија';
+        return t.typeBodywork;
       case DefectType.other:
-        return 'Друго';
+        return t.typeOther;
     }
   }
 

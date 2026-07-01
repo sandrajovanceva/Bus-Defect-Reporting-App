@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/widgets.dart';
 
@@ -53,6 +54,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -84,7 +86,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'CITY TRANSIT',
+                            t.brandCityTransit,
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: AppColors.accent,
                               letterSpacing: 2.4,
@@ -92,20 +94,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Defect Reporting',
+                            t.brandDefectReporting,
                             style: theme.textTheme.titleMedium,
                           ),
                         ],
                       ),
+                      const Spacer(),
+                      const LanguageMenuButton(),
                     ],
                   ),
                   const SizedBox(height: 56),
-                  Text('Sign in.', style: theme.textTheme.displayMedium),
+                  Text(t.loginTitle, style: theme.textTheme.displayMedium),
                   const SizedBox(height: 12),
-                  Text(
-                    'Use your dispatch-issued email and password to submit and track bus defect reports.',
-                    style: theme.textTheme.bodyMedium,
-                  ),
+                  Text(t.loginSubtitle, style: theme.textTheme.bodyMedium),
                   const SizedBox(height: 40),
                   Form(
                     key: _formKey,
@@ -113,8 +114,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         AppTextField(
-                          label: 'Email',
-                          hint: 'driver@example.com',
+                          label: t.fieldEmail,
+                          hint: t.loginEmailHint,
                           controller: _emailController,
                           prefixIcon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
@@ -122,17 +123,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           enabled: !_isSubmitting,
                           validator: (value) {
                             final email = value?.trim() ?? '';
-                            if (email.isEmpty) return 'Email is required';
+                            if (email.isEmpty) {
+                              return t.validationEmailRequired;
+                            }
                             if (!email.contains('@') || !email.contains('.')) {
-                              return 'Enter a valid email address';
+                              return t.validationEmailInvalid;
                             }
                             return null;
                           },
                         ),
                         const SizedBox(height: 20),
                         AppTextField(
-                          label: 'Password',
-                          hint: 'Enter password',
+                          label: t.fieldPassword,
+                          hint: t.loginPasswordHint,
                           controller: _passwordController,
                           prefixIcon: Icons.lock_outline,
                           obscureText: true,
@@ -141,10 +144,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onSubmitted: (_) => _submit(),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Password is required';
+                              return t.validationPasswordRequired;
                             }
                             if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
+                              return t.validationPasswordMin6;
                             }
                             return null;
                           },
@@ -189,7 +192,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ],
                         const SizedBox(height: 32),
                         AppButton(
-                          label: 'Sign in',
+                          label: t.loginSignIn,
                           icon: Icons.arrow_forward_rounded,
                           isLoading: _isSubmitting,
                           onPressed: _submit,
@@ -206,7 +209,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
-                          'NO ACCESS?',
+                          t.loginNoAccess,
                           style: theme.textTheme.labelSmall,
                         ),
                       ),
@@ -218,7 +221,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 12),
                   Center(
                     child: Text(
-                      'Contact dispatch to create or reset your account.',
+                      t.loginContactDispatch,
                       style: theme.textTheme.bodySmall,
                       textAlign: TextAlign.center,
                     ),

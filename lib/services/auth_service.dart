@@ -1,109 +1,59 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/user_model.dart';
 import '../models/user_role.dart';
-import 'firebase_service.dart';
+import 'api_client.dart';
 
 class AuthRepository {
-  AuthRepository({
-    required firebase_auth.FirebaseAuth auth,
-    required FirebaseFirestore firestore,
-  }) : _auth = auth,
-       _firestore = firestore;
+  AuthRepository(this._api);
 
-  final firebase_auth.FirebaseAuth _auth;
-  final FirebaseFirestore _firestore;
+  final ApiClient _api;
 
-  firebase_auth.User? get currentFirebaseUser => _auth.currentUser;
-
+  /// Restores the session from a stored token, or null when signed out.
   Future<UserModel?> currentUser() async {
-    final user = _auth.currentUser;
-    if (user == null) return null;
-    return _syncUserDocument(user);
+    final token = await _api.readToken();
+    if (token == null) return null;
+    try {
+      final res = await _api.dio.get<Map<String, dynamic>>('/auth/me');
+      return _userFromJson(res.data!);
+    } on DioException {
+      await _api.clearToken();
+      return null;
+    }
   }
 
   Future<UserModel> signIn({
     required String email,
     required String password,
   }) async {
-    final cleanEmail = email.trim();
-    firebase_auth.UserCredential credential;
-    try {
-      credential = await _auth.signInWithEmailAndPassword(
-        email: cleanEmail,
-        password: password,
-      );
-    } on firebase_auth.FirebaseAuthException catch (error) {
-      // DEV CONVENIENCE: when the account doesn't exist yet, provision it on
-      // the fly so the app can be demoed without Firebase Console access.
-      // Remove this fallback (keep only the sign-in call) for production.
-      if (error.code == 'user-not-found' ||
-          error.code == 'invalid-credential') {
-        credential = await _auth.createUserWithEmailAndPassword(
-          email: cleanEmail,
-          password: password,
-        );
-      } else {
-        rethrow;
-      }
-    }
-
-    final user = credential.user;
-    if (user == null) {
-      throw const AuthFailure('Authentication failed. Please try again.');
-    }
-
-    return _syncUserDocument(user);
+    final res = await _api.dio.post<Map<String, dynamic>>(
+      '/auth/login',
+      data: {'email': email.trim(), 'password': password},
+    );
+    return _handleAuthResponse(res.data!);
   }
 
-  Future<void> signOut() => _auth.signOut();
+  Future<void> signOut() => _api.clearToken();
 
-  Future<UserModel> _syncUserDocument(firebase_auth.User firebaseUser) async {
-    final ref = _firestore.collection('users').doc(firebaseUser.uid);
-    final snapshot = await ref.get();
-    final data = snapshot.data() ?? <String, dynamic>{};
-    final now = FieldValue.serverTimestamp();
+  Future<UserModel> _handleAuthResponse(Map<String, dynamic> data) async {
+    await _api.setToken(data['access_token'] as String);
+    return _userFromJson(data['user'] as Map<String, dynamic>);
+  }
 
-    final displayName = firebaseUser.displayName?.trim();
-    final email = firebaseUser.email?.trim();
-    final fallbackName = displayName?.isNotEmpty == true
-        ? displayName!
-        : (email?.split('@').first ?? 'Transit user');
-
-    // DEV CONVENIENCE: infer the role from the email for auto-provisioned
-    // accounts (e.g. "dispatcher@..." becomes a dispatcher) so both roles can
-    // be demoed without editing Firestore by hand. Existing docs keep their
-    // stored role.
-    final inferredRole = (email ?? '').toLowerCase().contains('dispatch')
-        ? UserRole.dispatcher.name
-        : UserRole.driver.name;
-    final roleName = (data['role'] as String?) ?? inferredRole;
-
-    await ref.set({
-      'uid': firebaseUser.uid,
-      'email': email,
-      'displayName': data['displayName'] ?? fallbackName,
-      'role': roleName,
-      'assignedBus': data['assignedBus'],
-      'assignedRoute': data['assignedRoute'],
-      if (!snapshot.exists) 'createdAt': now,
-      'updatedAt': now,
-    }, SetOptions(merge: true));
-
+  UserModel _userFromJson(Map<String, dynamic> json) {
+    final roleName = json['role'] as String?;
     final role = UserRole.values.firstWhere(
       (value) => value.name == roleName,
       orElse: () => UserRole.driver,
     );
-
     return UserModel(
-      id: firebaseUser.uid,
-      fullName: (data['displayName'] as String?) ?? fallbackName,
-      email: email,
+      id: json['id'] as String,
+      fullName: (json['full_name'] as String?) ?? 'Transit user',
+      email: json['email'] as String?,
       role: role,
-      assignedBus: data['assignedBus'] as String?,
-      assignedRoute: data['assignedRoute'] as String?,
+      assignedBus: json['assigned_bus'] as String?,
+      assignedRoute: json['assigned_route'] as String?,
     );
   }
 }
@@ -118,26 +68,21 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
 
   @override
   Future<UserModel?> build() async {
-    if (!ref.read(firebaseReadyProvider)) return null;
     return _repository.currentUser();
   }
 
   Future<String?> login(String email, String password) async {
-    if (!ref.read(firebaseReadyProvider)) {
-      return 'Firebase is not configured yet. Complete the setup steps in README.md.';
-    }
-
     state = const AsyncLoading();
     try {
       final user = await _repository.signIn(email: email, password: password);
       state = AsyncData(user);
       return null;
-    } on firebase_auth.FirebaseAuthException catch (error, stackTrace) {
-      state = AsyncError(error, stackTrace);
-      return _mapAuthError(error);
     } on AuthFailure catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
       return error.message;
+    } on DioException catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return _mapDioError(error);
     } on Object catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
       return 'Unable to sign in. Please check your connection and try again.';
@@ -145,49 +90,28 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
   }
 
   Future<void> logout() async {
-    if (ref.read(firebaseReadyProvider)) {
-      await _repository.signOut();
-    }
+    await _repository.signOut();
     state = const AsyncData(null);
   }
 
-  String _mapAuthError(firebase_auth.FirebaseAuthException error) {
-    switch (error.code) {
-      case 'invalid-email':
-        return 'Enter a valid email address.';
-      case 'user-disabled':
-        return 'This account has been disabled. Contact dispatch.';
-      case 'user-not-found':
-      case 'wrong-password':
-      case 'invalid-credential':
-        return 'Email or password is incorrect.';
-      case 'email-already-in-use':
-        return 'Email or password is incorrect.';
-      case 'weak-password':
-        return 'Password must be at least 6 characters.';
-      case 'too-many-requests':
-        return 'Too many attempts. Wait a moment and try again.';
-      case 'network-request-failed':
-        return 'Network error. Check your connection and try again.';
+  String _mapDioError(DioException error) {
+    switch (error.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.connectionError:
+      case DioExceptionType.receiveTimeout:
+        return 'Cannot reach the server. Make sure the backend is running.';
       default:
-        return error.message ?? 'Unable to sign in. Please try again.';
+        final detail = error.response?.data;
+        if (detail is Map && detail['detail'] is String) {
+          return detail['detail'] as String;
+        }
+        return 'Unable to sign in. Please try again.';
     }
   }
 }
 
-final firebaseAuthProvider = Provider<firebase_auth.FirebaseAuth>(
-  (_) => firebase_auth.FirebaseAuth.instance,
-);
-
-final firestoreProvider = Provider<FirebaseFirestore>(
-  (_) => FirebaseFirestore.instance,
-);
-
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return AuthRepository(
-    auth: ref.watch(firebaseAuthProvider),
-    firestore: ref.watch(firestoreProvider),
-  );
+  return AuthRepository(ref.watch(apiClientProvider));
 });
 
 final authProvider = AsyncNotifierProvider<AuthNotifier, UserModel?>(

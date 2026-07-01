@@ -1,19 +1,21 @@
+import '../l10n/app_localizations.dart';
+
 enum MaintenanceDepartment {
   electrical,
   mechanical,
   bodywork,
   general;
 
-  String get label {
+  String label(AppLocalizations t) {
     switch (this) {
       case MaintenanceDepartment.electrical:
-        return 'Електро оддел';
+        return t.deptElectrical;
       case MaintenanceDepartment.mechanical:
-        return 'Механички оддел';
+        return t.deptMechanical;
       case MaintenanceDepartment.bodywork:
-        return 'Каросериски оддел';
+        return t.deptBodywork;
       case MaintenanceDepartment.general:
-        return 'Општо одржување';
+        return t.deptGeneral;
     }
   }
 

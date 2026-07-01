@@ -4,15 +4,17 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/user_model.dart';
 import '../../models/user_role.dart';
 import '../../services/auth_service.dart';
 import '../../services/defect_service.dart';
+import '../../widgets/widgets.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  static const List<String> _days = [
+  static const List<String> _daysMk = [
     'ПОНЕДЕЛНИК',
     'ВТОРНИК',
     'СРЕДА',
@@ -22,7 +24,17 @@ class HomeScreen extends ConsumerWidget {
     'НЕДЕЛА',
   ];
 
-  static const List<String> _months = [
+  static const List<String> _daysEn = [
+    'MONDAY',
+    'TUESDAY',
+    'WEDNESDAY',
+    'THURSDAY',
+    'FRIDAY',
+    'SATURDAY',
+    'SUNDAY',
+  ];
+
+  static const List<String> _monthsMk = [
     'ЈАНУАРИ',
     'ФЕВРУАРИ',
     'МАРТ',
@@ -37,38 +49,53 @@ class HomeScreen extends ConsumerWidget {
     'ДЕКЕМВРИ',
   ];
 
-  String _greeting(DateTime now) {
+  static const List<String> _monthsEn = [
+    'JANUARY',
+    'FEBRUARY',
+    'MARCH',
+    'APRIL',
+    'MAY',
+    'JUNE',
+    'JULY',
+    'AUGUST',
+    'SEPTEMBER',
+    'OCTOBER',
+    'NOVEMBER',
+    'DECEMBER',
+  ];
+
+  String _greeting(DateTime now, AppLocalizations t) {
     final h = now.hour;
-    if (h < 12) return 'ДОБРО УТРО';
-    if (h < 18) return 'ДОБАР ДЕН';
-    return 'ДОБРА ВЕЧЕР';
+    if (h < 12) return t.greetingMorning;
+    if (h < 18) return t.greetingAfternoon;
+    return t.greetingEvening;
   }
 
-  String _formatDate(DateTime now) =>
-      '${_days[now.weekday - 1]}, ${now.day} ${_months[now.month - 1]}';
+  String _formatDate(DateTime now, bool mk) {
+    final days = mk ? _daysMk : _daysEn;
+    final months = mk ? _monthsMk : _monthsEn;
+    return '${days[now.weekday - 1]}, ${now.day} ${months[now.month - 1]}';
+  }
 
-  Future<void> _seedDemoData(
-    BuildContext context,
-    WidgetRef ref,
-    UserModel user,
-  ) async {
+  Future<void> _seedDemoData(BuildContext context, WidgetRef ref) async {
     final repo = ref.read(defectRepositoryProvider);
     final messenger = ScaffoldMessenger.of(context);
+    final t = AppLocalizations.of(context);
     try {
-      final existing = await repo.countOwnDefects(user.id);
-      if (existing > 0) {
+      final result = await repo.seedSampleDefects();
+      ref.invalidate(defectProvider);
+      if (result.seeded > 0) {
         messenger.showSnackBar(
-          SnackBar(content: Text('Веќе имате $existing пријавени дефекти.')),
+          SnackBar(content: Text(t.seedSuccess(result.seeded))),
         );
-        return;
+      } else {
+        messenger.showSnackBar(
+          SnackBar(content: Text(t.seedExisting(result.existing))),
+        );
       }
-      final count = await repo.seedSampleDefects(user);
-      messenger.showSnackBar(
-        SnackBar(content: Text('Внесени се $count демо дефекти.')),
-      );
     } on Object {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Не можеше да се внесат демо податоци.')),
+        SnackBar(content: Text(t.seedError)),
       );
     }
   }
@@ -78,6 +105,8 @@ class HomeScreen extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final user = authState.value;
     final theme = Theme.of(context);
+    final t = AppLocalizations.of(context);
+    final mk = Localizations.localeOf(context).languageCode == 'mk';
     final now = DateTime.now();
 
     if (authState.isLoading) {
@@ -93,15 +122,16 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ГЛАВЕН ЕКРАН'),
+        title: Text(t.homeTitle),
         actions: [
+          const LanguageMenuButton(),
           IconButton(
-            tooltip: 'Внеси демо податоци',
+            tooltip: t.homeLoadDemo,
             icon: const Icon(Icons.dataset_outlined, size: 20),
-            onPressed: () => _seedDemoData(context, ref, user),
+            onPressed: () => _seedDemoData(context, ref),
           ),
           IconButton(
-            tooltip: 'Одјави се',
+            tooltip: t.homeSignOut,
             icon: const Icon(Icons.logout_rounded, size: 20),
             onPressed: () async {
               await ref.read(authProvider.notifier).logout();
@@ -139,7 +169,7 @@ class HomeScreen extends ConsumerWidget {
                           ),
                           const SizedBox(width: 10),
                           Text(
-                            _greeting(now),
+                            _greeting(now, t),
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: AppColors.accent,
                               letterSpacing: 2.4,
@@ -175,7 +205,7 @@ class HomeScreen extends ConsumerWidget {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              _formatDate(now),
+                              _formatDate(now, mk),
                               style: theme.textTheme.labelSmall,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -190,9 +220,9 @@ class HomeScreen extends ConsumerWidget {
                         _AssignmentInfo(user: user),
                       ],
                       const SizedBox(height: 28),
-                      if (user.role.isDriver) ..._driverActions(context),
+                      if (user.role.isDriver) ..._driverActions(context, t),
                       if (user.role.isDispatcher)
-                        ..._dispatcherActions(context),
+                        ..._dispatcherActions(context, t),
                     ],
                   ),
                 ),
@@ -204,10 +234,7 @@ class HomeScreen extends ConsumerWidget {
             right: 0,
             bottom: 14,
             child: Center(
-              child: Text(
-                'DISPATCH  ·  CITY TRANSIT',
-                style: theme.textTheme.labelSmall,
-              ),
+              child: Text(t.homeFooter, style: theme.textTheme.labelSmall),
             ),
           ),
         ],
@@ -215,55 +242,63 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  List<Widget> _driverActions(BuildContext context) => [
+  List<Widget> _driverActions(BuildContext context, AppLocalizations t) => [
     _ActionCard(
-      title: 'Пријави дефект',
-      subtitle: 'Поднеси нов извештај',
+      title: t.actionReportTitle,
+      subtitle: t.actionReportSubtitle,
       icon: Icons.add_rounded,
       primary: true,
       onTap: () => context.push(AppRoutes.defectReport),
     ),
     const SizedBox(height: 12),
     _ActionCard(
-      title: 'Мои дефекти',
-      subtitle: 'Прегледај претходни извештаи',
+      title: t.actionMyDefectsTitle,
+      subtitle: t.actionMyDefectsSubtitle,
       icon: Icons.list_alt_rounded,
       primary: false,
       onTap: () => context.push(AppRoutes.myDefects),
     ),
     const SizedBox(height: 12),
     _ActionCard(
-      title: 'Мапа на дефекти',
-      subtitle: 'Прегледај дефекти на мапа',
+      title: t.actionMapTitle,
+      subtitle: t.actionMapSubtitle,
       icon: Icons.map_outlined,
       primary: false,
       onTap: () => context.push(AppRoutes.defectMap),
     ),
   ];
 
-  List<Widget> _dispatcherActions(BuildContext context) => [
+  List<Widget> _dispatcherActions(BuildContext context, AppLocalizations t) => [
     _ActionCard(
-      title: 'Сите дефекти',
-      subtitle: 'Прегледај сите пријавени дефекти',
+      title: t.actionAllDefectsTitle,
+      subtitle: t.actionAllDefectsSubtitle,
       icon: Icons.dashboard_rounded,
       primary: true,
       onTap: () => context.push(AppRoutes.myDefects),
     ),
     const SizedBox(height: 12),
     _ActionCard(
-      title: 'Мапа на дефекти',
-      subtitle: 'Прегледај дефекти на мапа',
+      title: t.actionMapTitle,
+      subtitle: t.actionMapSubtitle,
       icon: Icons.map_outlined,
       primary: false,
       onTap: () => context.push(AppRoutes.defectMap),
     ),
     const SizedBox(height: 12),
     _ActionCard(
-      title: 'Управување',
-      subtitle: 'Статуси, возачи и линии',
+      title: t.actionManageTitle,
+      subtitle: t.actionManageSubtitle,
       icon: Icons.tune_rounded,
       primary: false,
       onTap: () => context.push(AppRoutes.management),
+    ),
+    const SizedBox(height: 12),
+    _ActionCard(
+      title: t.actionStaffTitle,
+      subtitle: t.actionStaffSubtitle,
+      icon: Icons.manage_accounts_outlined,
+      primary: false,
+      onTap: () => context.push(AppRoutes.staff),
     ),
   ];
 }
@@ -283,7 +318,7 @@ class _RoleBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(2),
       ),
       child: Text(
-        role.label,
+        role.label(AppLocalizations.of(context)),
         style: theme.textTheme.labelSmall?.copyWith(
           color: AppColors.background,
           fontWeight: FontWeight.w700,

@@ -17,9 +17,7 @@ class LocationService {
   Future<DefectLocation> getCurrentLocation() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      throw const LocationFailure(
-        'Локациските услуги се исклучени. Вклучете ги и обидете се повторно.',
-      );
+      throw const LocationFailure(LocationErrorCode.servicesDisabled);
     }
 
     var permission = await Geolocator.checkPermission();
@@ -28,15 +26,11 @@ class LocationService {
     }
 
     if (permission == LocationPermission.denied) {
-      throw const LocationFailure(
-        'Пристапот до локацијата е одбиен.',
-      );
+      throw const LocationFailure(LocationErrorCode.denied);
     }
 
     if (permission == LocationPermission.deniedForever) {
-      throw const LocationFailure(
-        'Пристапот до локацијата е трајно одбиен. Овозможете го од подесувањата.',
-      );
+      throw const LocationFailure(LocationErrorCode.deniedForever);
     }
 
     final position = await Geolocator.getCurrentPosition(
@@ -52,9 +46,11 @@ class LocationService {
   }
 }
 
+enum LocationErrorCode { servicesDisabled, denied, deniedForever, unknown }
+
 class LocationFailure implements Exception {
-  const LocationFailure(this.message);
-  final String message;
+  const LocationFailure(this.code);
+  final LocationErrorCode code;
 }
 
 final locationServiceProvider = Provider<LocationService>(

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/defect_model.dart';
 import '../../models/defect_priority.dart';
 import '../../models/defect_type.dart';
@@ -98,13 +99,14 @@ class _MyDefectsScreenState extends ConsumerState<MyDefectsScreen> {
 
     final defects = _filter.apply(base);
 
-    final title = isDispatcher ? 'СИТЕ ДЕФЕКТИ' : 'МОИ ДЕФЕКТИ';
+    final t = AppLocalizations.of(context);
+    final title = isDispatcher ? t.myDefectsTitleAll : t.myDefectsTitleMine;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
         leading: IconButton(
-          tooltip: 'Назад',
+          tooltip: t.actionBack,
           icon: const Icon(Icons.arrow_back_rounded, size: 20),
           onPressed: () => context.pop(),
         ),
@@ -113,7 +115,7 @@ class _MyDefectsScreenState extends ConsumerState<MyDefectsScreen> {
             TextButton(
               onPressed: _clearFilters,
               child: Text(
-                'ИСЧИСТИ',
+                t.filterClear,
                 style: TextStyle(
                   color: AppColors.accent,
                   fontSize: 11,
@@ -166,6 +168,7 @@ class _FilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context);
 
     return Container(
       color: AppColors.surface,
@@ -180,7 +183,7 @@ class _FilterBar extends StatelessWidget {
               onChanged: (v) => onChanged(filter.copyWith(busNumber: v)),
               style: theme.textTheme.bodySmall,
               decoration: InputDecoration(
-                hintText: 'Пребарај по број на автобус…',
+                hintText: loc.searchBusHint,
                 hintStyle: theme.textTheme.bodySmall?.copyWith(
                   color: AppColors.textMuted,
                 ),
@@ -246,11 +249,11 @@ class _FilterBar extends StatelessWidget {
                   DefectType.doors,
                   DefectType.other,
                 ].map(
-                  (t) => _FilterChip(
-                    label: t.label,
-                    selected: filter.type == t,
+                  (type) => _FilterChip(
+                    label: type.label(loc),
+                    selected: filter.type == type,
                     onTap: () => onChanged(
-                      filter.copyWith(type: filter.type == t ? null : t),
+                      filter.copyWith(type: filter.type == type ? null : type),
                     ),
                   ),
                 ),
@@ -337,6 +340,7 @@ class _DefectTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = AppLocalizations.of(context);
 
     return InkWell(
       onTap: () => context.push(AppRoutes.defectDetails(defect.id)),
@@ -373,7 +377,7 @@ class _DefectTile extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '· Автобус #${defect.busNumber}',
+                        '· ${t.busShort(defect.busNumber)}',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -382,7 +386,7 @@ class _DefectTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    defect.type.label,
+                    defect.type.label(t),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.textPrimary,
                     ),
@@ -445,6 +449,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -456,9 +461,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            isFiltered
-                ? 'Нема дефекти за избраните филтри'
-                : 'Нема пријавени дефекти',
+            isFiltered ? t.emptyFiltered : t.emptyNoDefects,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: AppColors.textSecondary,
             ),

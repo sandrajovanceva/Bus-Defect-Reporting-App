@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/widgets.dart';
 
@@ -33,6 +34,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       body: Stack(
@@ -57,7 +59,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  'CITY TRANSIT',
+                  t.brandCityTransit,
                   style: theme.textTheme.labelMedium?.copyWith(
                     letterSpacing: 4,
                     color: AppColors.accent,
@@ -65,13 +67,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'DEFECT REPORTING',
+                  t.brandDefectReporting.toUpperCase(),
                   style: theme.textTheme.headlineMedium?.copyWith(
                     letterSpacing: 2,
                   ),
                 ),
                 const SizedBox(height: 56),
-                const AppLoadingIndicator(message: 'Initializing'),
+                AppLoadingIndicator(message: t.splashInitializing),
               ],
             ),
           ),

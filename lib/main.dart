@@ -2,11 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
-import 'services/firebase_service.dart';
+import 'core/settings/locale_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await FirebaseService.initialize();
+  final initialLocale = await loadInitialLocale();
 
-  runApp(const ProviderScope(child: BusDefectApp()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        localeProvider.overrideWith(() => LocaleController(initialLocale)),
+      ],
+      child: const BusDefectApp(),
+    ),
+  );
 }

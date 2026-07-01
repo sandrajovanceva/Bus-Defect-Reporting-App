@@ -16,7 +16,7 @@ class DefectModel {
     required this.submittedAt,
     required this.submittedById,
     required this.submittedByName,
-    this.imageUrl,
+    this.imageBase64,
     this.latitude,
     this.longitude,
     this.updatedAt,
@@ -33,7 +33,7 @@ class DefectModel {
   final DateTime submittedAt;
   final String submittedById;
   final String submittedByName;
-  final String? imageUrl;
+  final String? imageBase64;
   final double? latitude;
   final double? longitude;
   final DateTime? updatedAt;
@@ -43,7 +43,7 @@ class DefectModel {
 
   DefectModel copyWith({
     DefectStatus? status,
-    String? imageUrl,
+    String? imageBase64,
     DateTime? updatedAt,
     List<DefectHistoryEntry>? history,
   }) {
@@ -58,7 +58,7 @@ class DefectModel {
       submittedAt: submittedAt,
       submittedById: submittedById,
       submittedByName: submittedByName,
-      imageUrl: imageUrl ?? this.imageUrl,
+      imageBase64: imageBase64 ?? this.imageBase64,
       latitude: latitude,
       longitude: longitude,
       updatedAt: updatedAt ?? this.updatedAt,

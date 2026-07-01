@@ -1,17 +1,19 @@
-import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/defect_priority.dart';
 import '../../models/defect_type.dart';
 import '../../models/maintenance_department.dart';
 import '../../services/auth_service.dart';
 import '../../services/defect_service.dart';
 import '../../services/location_service.dart';
-import '../../services/storage_service.dart';
 import '../../widgets/widgets.dart';
 
 class DefectReportScreen extends ConsumerStatefulWidget {
@@ -30,6 +32,7 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
   DefectType? _selectedType;
   DefectPriority _selectedPriority = DefectPriority.medium;
   XFile? _attachment;
+  Uint8List? _attachmentBytes;
   DefectLocation? _location;
   bool _isLocating = false;
   bool _isSubmitting = false;
@@ -49,17 +52,38 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
         imageQuality: 85,
         maxWidth: 1920,
       );
-      if (!mounted || picked == null) return;
-      setState(() => _attachment = picked);
+      if (picked == null) return;
+      final bytes = await picked.readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _attachment = picked;
+        _attachmentBytes = bytes;
+      });
     } on Exception catch (e) {
       if (!mounted) return;
+      final t = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Не можеше да се отвори сликата: $e')),
+        SnackBar(content: Text(t.reportImageOpenError('$e'))),
       );
     }
   }
 
+  String _locationErrorText(AppLocalizations t, LocationErrorCode code) {
+    switch (code) {
+      case LocationErrorCode.servicesDisabled:
+        return t.locationServicesOff;
+      case LocationErrorCode.denied:
+        return t.locationDenied;
+      case LocationErrorCode.deniedForever:
+        return t.locationDeniedForever;
+      case LocationErrorCode.unknown:
+        return t.locationError;
+    }
+  }
+
   Future<void> _captureLocation() async {
+    final t = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     setState(() => _isLocating = true);
     try {
       final location = await ref
@@ -73,17 +97,13 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
     } on LocationFailure catch (e) {
       if (!mounted) return;
       setState(() => _isLocating = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.message)));
+      messenger.showSnackBar(
+        SnackBar(content: Text(_locationErrorText(t, e.code))),
+      );
     } on Exception {
       if (!mounted) return;
       setState(() => _isLocating = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Не можеше да се одреди локацијата.'),
-        ),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(t.locationError)));
     }
   }
 
@@ -111,7 +131,7 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
               const SizedBox(height: 12),
               ListTile(
                 leading: const Icon(Icons.photo_camera_outlined),
-                title: const Text('Сликај со камера'),
+                title: Text(AppLocalizations.of(context).sheetCamera),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   _pickImage(ImageSource.camera);
@@ -119,7 +139,7 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library_outlined),
-                title: const Text('Избери од галерија'),
+                title: Text(AppLocalizations.of(context).sheetGallery),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   _pickImage(ImageSource.gallery);
@@ -143,43 +163,34 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
     try {
       final user = ref.read(authProvider).value;
       if (user == null) {
-        throw const _SubmitException(
-          'Please sign in before submitting a report.',
-        );
+        throw _SubmitException(AppLocalizations.of(context).reportSignInFirst);
       }
 
-      final imageUrl = await ref
-          .read(defectStorageServiceProvider)
-          .uploadDefectImage(image: _attachment, userId: user.id);
+      final imageBase64 = _attachmentBytes != null
+          ? base64Encode(_attachmentBytes!)
+          : null;
 
       await ref
           .read(defectRepositoryProvider)
           .createDefect(
             DefectDraft(
-              userId: user.id,
-              userName: user.fullName,
               busNumber: _busNumberController.text,
               type: _selectedType!,
               priority: _selectedPriority,
               description: _descriptionController.text,
-              imageUrl: imageUrl,
+              imageBase64: imageBase64,
               latitude: _location?.latitude,
               longitude: _location?.longitude,
             ),
           );
 
+      ref.invalidate(defectProvider);
       if (!mounted) return;
 
       await _showSuccessSheet();
       if (!mounted) return;
       context.pop();
     } on DefectFailure catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isSubmitting = false;
-        _submitError = e.message;
-      });
-    } on StorageFailure catch (e) {
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;
@@ -195,8 +206,7 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;
-        _submitError =
-            'Unable to submit the report. Check your connection and try again.';
+        _submitError = AppLocalizations.of(context).reportSubmitError;
       });
     }
   }
@@ -228,12 +238,13 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
+    final t = AppLocalizations.of(context);
 
     final dropdownOptions = DefectType.values
         .map(
           (type) => AppDropdownOption<DefectType>(
             value: type,
-            label: type.label,
+            label: type.label(t),
             icon: type.icon,
           ),
         )
@@ -241,9 +252,9 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ПРИЈАВИ ДЕФЕКТ'),
+        title: Text(t.reportTitle),
         leading: IconButton(
-          tooltip: 'Назад',
+          tooltip: t.actionBack,
           icon: const Icon(Icons.arrow_back_rounded, size: 20),
           onPressed: () => context.pop(),
         ),
@@ -273,10 +284,10 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
                             ),
                           ],
                           const SizedBox(height: 28),
-                          const SectionHeader(title: 'Возило'),
+                          SectionHeader(title: t.sectionVehicle),
                           AppTextField(
-                            label: 'Број на автобус',
-                            hint: 'пр. 412 или АА-1234-БВ',
+                            label: t.fieldBusNumber,
+                            hint: t.reportBusHint,
                             controller: _busNumberController,
                             prefixIcon: Icons.directions_bus_filled_rounded,
                             keyboardType: TextInputType.text,
@@ -285,19 +296,19 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
                             validator: (value) {
                               final v = value?.trim() ?? '';
                               if (v.isEmpty) {
-                                return 'Внесете го бројот на автобусот';
+                                return t.validationBusRequired;
                               }
                               if (v.length < 2) {
-                                return 'Бројот на автобусот е премногу краток';
+                                return t.validationBusShort;
                               }
                               return null;
                             },
                           ),
                           const SizedBox(height: 28),
-                          const SectionHeader(title: 'Дефект'),
+                          SectionHeader(title: t.sectionDefect),
                           AppDropdownField<DefectType>(
-                            label: 'Тип на дефект',
-                            hint: 'Изберете категорија',
+                            label: t.fieldDefectType,
+                            hint: t.reportTypeHint,
                             prefixIcon: Icons.category_outlined,
                             value: _selectedType,
                             options: dropdownOptions,
@@ -305,7 +316,7 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
                             onChanged: (type) =>
                                 setState(() => _selectedType = type),
                             validator: (type) =>
-                                type == null ? 'Изберете тип на дефект' : null,
+                                type == null ? t.validationTypeRequired : null,
                           ),
                           if (_selectedType != null) ...[
                             const SizedBox(height: 10),
@@ -322,8 +333,8 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
                           ),
                           const SizedBox(height: 20),
                           AppTextField(
-                            label: 'Опис',
-                            hint: 'Опишете го дефектот накратко…',
+                            label: t.fieldDescription,
+                            hint: t.reportDescriptionHint,
                             controller: _descriptionController,
                             maxLines: 5,
                             keyboardType: TextInputType.multiline,
@@ -331,24 +342,28 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
                             validator: (value) {
                               final v = value?.trim() ?? '';
                               if (v.isEmpty) {
-                                return 'Внесете опис на дефектот';
+                                return t.validationDescRequired;
                               }
                               if (v.length < 8) {
-                                return 'Описот е премногу краток';
+                                return t.validationDescShort;
                               }
                               return null;
                             },
                           ),
                           const SizedBox(height: 28),
-                          const SectionHeader(title: 'Прилог'),
+                          SectionHeader(title: t.sectionAttachment),
                           _AttachmentPicker(
-                            attachment: _attachment,
+                            bytes: _attachmentBytes,
+                            name: _attachment?.name,
                             enabled: !_isSubmitting,
                             onPick: _showAttachmentSheet,
-                            onClear: () => setState(() => _attachment = null),
+                            onClear: () => setState(() {
+                              _attachment = null;
+                              _attachmentBytes = null;
+                            }),
                           ),
                           const SizedBox(height: 28),
-                          const SectionHeader(title: 'Локација'),
+                          SectionHeader(title: t.sectionLocation),
                           _LocationPicker(
                             location: _location,
                             isLocating: _isLocating,
@@ -357,10 +372,7 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
                             onClear: () => setState(() => _location = null),
                           ),
                           const SizedBox(height: 16),
-                          const _HelperNote(
-                            text:
-                                'Извештајот ќе биде препратен до диспечерот веднаш по поднесувањето.',
-                          ),
+                          _HelperNote(text: t.reportHelperNote),
                         ],
                       ),
                     ),
@@ -393,6 +405,7 @@ class _ReportHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
@@ -413,7 +426,7 @@ class _ReportHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                 ),
                 child: Text(
-                  'НОВ ИЗВЕШТАЈ',
+                  t.reportBadgeNew,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -433,16 +446,9 @@ class _ReportHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            'Пополнете го формуларот',
-            style: theme.textTheme.headlineMedium,
-          ),
+          Text(t.reportFillForm, style: theme.textTheme.headlineMedium),
           const SizedBox(height: 4),
-          Text(
-            'Внесете ги основните податоци за возилото и опишете го '
-            'дефектот за да биде препратен до сервисот.',
-            style: theme.textTheme.bodyMedium,
-          ),
+          Text(t.reportFormIntro, style: theme.textTheme.bodyMedium),
         ],
       ),
     );
@@ -451,13 +457,15 @@ class _ReportHeader extends StatelessWidget {
 
 class _AttachmentPicker extends StatelessWidget {
   const _AttachmentPicker({
-    required this.attachment,
+    required this.bytes,
+    required this.name,
     required this.onPick,
     required this.onClear,
     required this.enabled,
   });
 
-  final XFile? attachment;
+  final Uint8List? bytes;
+  final String? name;
   final VoidCallback onPick;
   final VoidCallback onClear;
   final bool enabled;
@@ -465,8 +473,9 @@ class _AttachmentPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = AppLocalizations.of(context);
 
-    if (attachment == null) {
+    if (bytes == null) {
       return Material(
         color: Colors.transparent,
         child: InkWell(
@@ -501,7 +510,7 @@ class _AttachmentPicker extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'ДОДАДИ СЛИКА',
+                          t.attachmentAdd,
                           style: theme.textTheme.labelLarge?.copyWith(
                             fontSize: 12,
                             letterSpacing: 1.4,
@@ -509,7 +518,7 @@ class _AttachmentPicker extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Опционално · од камера или галерија',
+                          t.attachmentOptional,
                           style: theme.textTheme.bodySmall,
                         ),
                       ],
@@ -541,8 +550,8 @@ class _AttachmentPicker extends StatelessWidget {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
             child: AspectRatio(
               aspectRatio: 16 / 9,
-              child: Image.file(
-                File(attachment!.path),
+              child: Image.memory(
+                bytes!,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
                   color: AppColors.surfaceElevated,
@@ -568,7 +577,7 @@ class _AttachmentPicker extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    attachment!.name,
+                    name ?? t.attachmentImageFallback,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.textPrimary,
                     ),
@@ -578,10 +587,10 @@ class _AttachmentPicker extends StatelessWidget {
                 TextButton.icon(
                   onPressed: enabled ? onPick : null,
                   icon: const Icon(Icons.refresh_rounded, size: 16),
-                  label: const Text('Замени'),
+                  label: Text(t.actionReplace),
                 ),
                 IconButton(
-                  tooltip: 'Отстрани',
+                  tooltip: t.actionRemove,
                   onPressed: enabled ? onClear : null,
                   icon: const Icon(
                     Icons.close_rounded,
@@ -618,6 +627,7 @@ class _LocationPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = AppLocalizations.of(context);
     final loc = location;
 
     if (loc == null) {
@@ -660,7 +670,7 @@ class _LocationPicker extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isLocating ? 'СЕ ОДРЕДУВА…' : 'ПРИКАЧИ ЛОКАЦИЈА',
+                          isLocating ? t.locationLocating : t.locationAdd,
                           style: theme.textTheme.labelLarge?.copyWith(
                             fontSize: 12,
                             letterSpacing: 1.4,
@@ -668,7 +678,7 @@ class _LocationPicker extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Опционално · GPS координати на дефектот',
+                          t.locationOptional,
                           style: theme.textTheme.bodySmall,
                         ),
                       ],
@@ -715,7 +725,7 @@ class _LocationPicker extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ЛОКАЦИЈАТА Е ЗАЧУВАНА',
+                  t.locationSaved,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: AppColors.statusResolved,
                     fontSize: 9,
@@ -737,10 +747,10 @@ class _LocationPicker extends StatelessWidget {
           TextButton.icon(
             onPressed: enabled && !isLocating ? onCapture : null,
             icon: const Icon(Icons.refresh_rounded, size: 16),
-            label: const Text('Освежи'),
+            label: Text(t.actionRefresh),
           ),
           IconButton(
-            tooltip: 'Отстрани',
+            tooltip: t.actionRemove,
             onPressed: enabled ? onClear : null,
             icon: const Icon(
               Icons.close_rounded,
@@ -763,6 +773,7 @@ class _InlineErrorBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = AppLocalizations.of(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -785,7 +796,7 @@ class _InlineErrorBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ГРЕШКА ПРИ ИСПРАЌАЊЕ',
+                  t.reportErrorTitle,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: AppColors.accentDark,
                     fontWeight: FontWeight.w700,
@@ -804,7 +815,7 @@ class _InlineErrorBanner extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Затвори',
+            tooltip: t.actionClose,
             iconSize: 18,
             visualDensity: VisualDensity.compact,
             color: AppColors.accentDark,
@@ -823,6 +834,7 @@ class _SuccessSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
@@ -856,7 +868,7 @@ class _SuccessSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'ПОДНЕСЕНО',
+            t.successSubmitted,
             style: theme.textTheme.labelMedium?.copyWith(
               color: AppColors.statusResolved,
               fontWeight: FontWeight.w700,
@@ -865,13 +877,13 @@ class _SuccessSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Извештајот е испратен',
+            t.successTitle,
             style: theme.textTheme.headlineMedium,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
           Text(
-            'Диспечерот ќе го прегледа и ќе ве извести за статусот.',
+            t.successSubtitle,
             style: theme.textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
@@ -929,6 +941,7 @@ class _DepartmentBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -950,7 +963,7 @@ class _DepartmentBadge extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ДОДЕЛЕН ОДДЕЛ',
+                  t.assignedDepartment,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: AppColors.textMuted,
                     fontSize: 9,
@@ -959,7 +972,7 @@ class _DepartmentBadge extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  department.label,
+                  department.label(t),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
@@ -1004,12 +1017,13 @@ class _PrioritySelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Приоритет',
+          t.fieldPriority,
           style: theme.textTheme.labelSmall?.copyWith(
             color: AppColors.textSecondary,
             letterSpacing: 1.2,
@@ -1088,6 +1102,7 @@ class _SubmitBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
       decoration: const BoxDecoration(
@@ -1099,7 +1114,7 @@ class _SubmitBar extends StatelessWidget {
           Expanded(
             flex: 2,
             child: AppButton(
-              label: 'Откажи',
+              label: t.submitCancel,
               variant: AppButtonVariant.outline,
               onPressed: isSubmitting ? null : onCancel,
             ),
@@ -1108,7 +1123,7 @@ class _SubmitBar extends StatelessWidget {
           Expanded(
             flex: 3,
             child: AppButton(
-              label: 'Поднеси',
+              label: t.submitSend,
               icon: Icons.send_rounded,
               isLoading: isSubmitting,
               onPressed: onSubmit,

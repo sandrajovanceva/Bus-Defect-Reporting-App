@@ -20,8 +20,10 @@ class AppColors {
   static const Color textMuted = Color(0xFF9A958D);
 
   static const Color statusNew = Color(0xFFDC2626);
+  static const Color statusArmaturaReview = Color(0xFF7C3AED);
   static const Color statusInProgress = Color(0xFFB45309);
   static const Color statusResolved = Color(0xFF15803D);
+  static const Color statusReturnedToService = Color(0xFF1D4ED8);
   static const Color statusRejected = Color(0xFF6B7280);
 }
 

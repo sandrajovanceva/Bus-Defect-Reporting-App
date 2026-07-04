@@ -10,7 +10,6 @@ class AppRoutes {
 
   static const String management = '/management';
   static const String staff = '/staff';
-  static const String defectMap = '/map';
 
   static String defectDetails(String id) => '/defects/$id';
 }

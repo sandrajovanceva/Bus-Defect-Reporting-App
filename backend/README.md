@@ -62,6 +62,7 @@ to be healthy before starting.
 | POST | `/defects` | Bearer | Create a defect report |
 | GET | `/defects/{id}` | Bearer | Single defect (with image) |
 | PATCH | `/defects/{id}/status` | Dispatcher | Change status |
+| PATCH | `/defects/{id}/type` | Dispatcher | Armatura classification: set the defect type/department |
 | POST | `/defects/seed` | Bearer | Seed demo defects (dev/testing) |
 
 ## Backups (Postgres)

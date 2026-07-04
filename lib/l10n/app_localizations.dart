@@ -440,6 +440,36 @@ abstract class AppLocalizations {
   /// **'The bus number is too short'**
   String get validationBusShort;
 
+  /// No description provided for @fieldDriverName.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver'**
+  String get fieldDriverName;
+
+  /// No description provided for @reportDriverHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Full name of the driver'**
+  String get reportDriverHint;
+
+  /// No description provided for @validationDriverRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the driver\'s name'**
+  String get validationDriverRequired;
+
+  /// No description provided for @validationDriverShort.
+  ///
+  /// In en, this message translates to:
+  /// **'The driver\'s name is too short'**
+  String get validationDriverShort;
+
+  /// No description provided for @reportNoDrivers.
+  ///
+  /// In en, this message translates to:
+  /// **'No drivers registered yet. Add one to select them here.'**
+  String get reportNoDrivers;
+
   /// No description provided for @sectionDefect.
   ///
   /// In en, this message translates to:
@@ -734,6 +764,12 @@ abstract class AppLocalizations {
   /// **'Driver'**
   String get labelDriver;
 
+  /// No description provided for @labelReportedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged by'**
+  String get labelReportedBy;
+
   /// No description provided for @labelLocation.
   ///
   /// In en, this message translates to:
@@ -776,6 +812,12 @@ abstract class AppLocalizations {
   /// **'New'**
   String get statusNew;
 
+  /// No description provided for @statusArmaturaReview.
+  ///
+  /// In en, this message translates to:
+  /// **'At Armatura'**
+  String get statusArmaturaReview;
+
   /// No description provided for @statusInProgress.
   ///
   /// In en, this message translates to:
@@ -788,11 +830,41 @@ abstract class AppLocalizations {
   /// **'Resolved'**
   String get statusResolved;
 
+  /// No description provided for @statusReturnedToService.
+  ///
+  /// In en, this message translates to:
+  /// **'Returned to service'**
+  String get statusReturnedToService;
+
   /// No description provided for @statusRejected.
   ///
   /// In en, this message translates to:
   /// **'Rejected'**
   String get statusRejected;
+
+  /// No description provided for @sectionClassify.
+  ///
+  /// In en, this message translates to:
+  /// **'ARMATURA CLASSIFICATION'**
+  String get sectionClassify;
+
+  /// No description provided for @classifyHelperNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Armatura reviews the report and determines the actual defect category — electrical, mechanical or bravari (bodywork) — which sets the department it\'s routed to.'**
+  String get classifyHelperNote;
+
+  /// No description provided for @classifySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm classification'**
+  String get classifySave;
+
+  /// No description provided for @classifyUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'This is already the current classification.'**
+  String get classifyUnchanged;
 
   /// No description provided for @mapTitle.
   ///
@@ -1022,6 +1094,12 @@ abstract class AppLocalizations {
   /// **'DISPATCHER'**
   String get roleDispatcher;
 
+  /// No description provided for @typeUnclassified.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet classified'**
+  String get typeUnclassified;
+
   /// No description provided for @typeElectrical.
   ///
   /// In en, this message translates to:
@@ -1070,6 +1148,12 @@ abstract class AppLocalizations {
   /// **'Other'**
   String get typeOther;
 
+  /// No description provided for @deptUnassigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Armatura review'**
+  String get deptUnassigned;
+
   /// No description provided for @deptElectrical.
   ///
   /// In en, this message translates to:
@@ -1093,6 +1177,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'General maintenance'**
   String get deptGeneral;
+
+  /// No description provided for @reportPendingClassification.
+  ///
+  /// In en, this message translates to:
+  /// **'No need to pick a category — Armatura will review the description and classify the defect (electrical, mechanical, bravari/bodywork, etc.) once the report comes in.'**
+  String get reportPendingClassification;
 }
 
 class _AppLocalizationsDelegate

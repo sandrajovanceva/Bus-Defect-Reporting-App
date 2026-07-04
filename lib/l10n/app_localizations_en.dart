@@ -187,6 +187,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get validationBusShort => 'The bus number is too short';
 
   @override
+  String get fieldDriverName => 'Driver';
+
+  @override
+  String get reportDriverHint => 'Full name of the driver';
+
+  @override
+  String get validationDriverRequired => 'Enter the driver\'s name';
+
+  @override
+  String get validationDriverShort => 'The driver\'s name is too short';
+
+  @override
+  String get reportNoDrivers =>
+      'No drivers registered yet. Add one to select them here.';
+
+  @override
   String get sectionDefect => 'Defect';
 
   @override
@@ -343,6 +359,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get labelDriver => 'Driver';
 
   @override
+  String get labelReportedBy => 'Logged by';
+
+  @override
   String get labelLocation => 'Location';
 
   @override
@@ -367,13 +386,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusNew => 'New';
 
   @override
+  String get statusArmaturaReview => 'At Armatura';
+
+  @override
   String get statusInProgress => 'In Progress';
 
   @override
   String get statusResolved => 'Resolved';
 
   @override
+  String get statusReturnedToService => 'Returned to service';
+
+  @override
   String get statusRejected => 'Rejected';
+
+  @override
+  String get sectionClassify => 'ARMATURA CLASSIFICATION';
+
+  @override
+  String get classifyHelperNote =>
+      'Armatura reviews the report and determines the actual defect category — electrical, mechanical or bravari (bodywork) — which sets the department it\'s routed to.';
+
+  @override
+  String get classifySave => 'Confirm classification';
+
+  @override
+  String get classifyUnchanged => 'This is already the current classification.';
 
   @override
   String get mapTitle => 'DEFECT MAP';
@@ -502,6 +540,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get roleDispatcher => 'DISPATCHER';
 
   @override
+  String get typeUnclassified => 'Not yet classified';
+
+  @override
   String get typeElectrical => 'Electrical';
 
   @override
@@ -526,6 +567,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get typeOther => 'Other';
 
   @override
+  String get deptUnassigned => 'Pending Armatura review';
+
+  @override
   String get deptElectrical => 'Electrical department';
 
   @override
@@ -536,4 +580,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deptGeneral => 'General maintenance';
+
+  @override
+  String get reportPendingClassification =>
+      'No need to pick a category — Armatura will review the description and classify the defect (electrical, mechanical, bravari/bodywork, etc.) once the report comes in.';
 }

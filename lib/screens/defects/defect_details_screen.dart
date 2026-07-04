@@ -9,7 +9,7 @@ import '../../models/defect_model.dart';
 import '../../models/defect_type.dart';
 import '../../services/auth_service.dart';
 import '../../services/defect_service.dart';
-import '../../widgets/status_pill.dart';
+import '../../widgets/widgets.dart';
 
 class DefectDetailsScreen extends ConsumerWidget {
   const DefectDetailsScreen({super.key, required this.defectId});
@@ -115,7 +115,12 @@ class DefectDetailsScreen extends ConsumerWidget {
                       value: _formatDate(defect.submittedAt),
                     ),
                     const SizedBox(height: 8),
-                    _Row(label: t.labelDriver, value: defect.submittedByName),
+                    _Row(label: t.labelDriver, value: defect.driverName),
+                    const SizedBox(height: 8),
+                    _Row(
+                      label: t.labelReportedBy,
+                      value: defect.submittedByName,
+                    ),
                     if (defect.hasLocation) ...[
                       const SizedBox(height: 8),
                       _Row(
@@ -141,6 +146,10 @@ class DefectDetailsScreen extends ConsumerWidget {
                   ],
                 ),
                 if (isDispatcher) ...[
+                  const SizedBox(height: 24),
+                  _SectionLabel(text: t.sectionClassify),
+                  const SizedBox(height: 10),
+                  _ClassifyPanel(defect: defect),
                   const SizedBox(height: 24),
                   _SectionLabel(text: t.sectionChangeStatus),
                   const SizedBox(height: 10),
@@ -176,8 +185,10 @@ class _StatusUpdatePanel extends ConsumerWidget {
 
     final options = [
       (DefectStatus.newReport, t.statusNew),
+      (DefectStatus.armaturaReview, t.statusArmaturaReview),
       (DefectStatus.inProgress, t.statusInProgress),
       (DefectStatus.resolved, t.statusResolved),
+      (DefectStatus.returnedToService, t.statusReturnedToService),
       (DefectStatus.rejected, t.statusRejected),
     ];
 
@@ -257,6 +268,129 @@ class _StatusUpdatePanel extends ConsumerWidget {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+/// Lets a dispatcher (standing in for the Арматура department) confirm or
+/// correct the defect's category. The reporter's initial pick is just a
+/// guess from the driver's card / phone call — Арматура is the step that
+/// actually pins it down to electrical / mechanical / bravari, which in
+/// turn decides which department the repair gets routed to.
+class _ClassifyPanel extends ConsumerStatefulWidget {
+  const _ClassifyPanel({required this.defect});
+  final DefectModel defect;
+
+  @override
+  ConsumerState<_ClassifyPanel> createState() => _ClassifyPanelState();
+}
+
+class _ClassifyPanelState extends ConsumerState<_ClassifyPanel> {
+  // Null means "not chosen yet" — the case right after a report comes in
+  // still marked unclassified, before Armatura has picked a real category.
+  late DefectType? _selected = _initialSelection(widget.defect.type);
+  bool _isSaving = false;
+
+  static DefectType? _initialSelection(DefectType type) =>
+      type == DefectType.unclassified ? null : type;
+
+  @override
+  void didUpdateWidget(covariant _ClassifyPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.defect.type != widget.defect.type) {
+      _selected = _initialSelection(widget.defect.type);
+    }
+  }
+
+  Future<void> _save() async {
+    final selected = _selected;
+    if (selected == null) return;
+    setState(() => _isSaving = true);
+    try {
+      await ref
+          .read(defectRepositoryProvider)
+          .reclassify(defectId: widget.defect.id, type: selected);
+      ref.invalidate(defectProvider);
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final unchanged =
+        _selected != null && _selected == widget.defect.type;
+    final canSave = _selected != null && !unchanged;
+
+    // Armatura always picks a real category — "unclassified" isn't a valid
+    // classification outcome, just the pre-review default.
+    final options = DefectType.values
+        .where((type) => type != DefectType.unclassified)
+        .map(
+          (type) => AppDropdownOption<DefectType>(
+            value: type,
+            label: type.label(t),
+            icon: type.icon,
+          ),
+        )
+        .toList();
+
+    return _InfoCard(
+      children: [
+        Text(
+          t.classifyHelperNote,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(height: 1.4),
+        ),
+        const SizedBox(height: 14),
+        AppDropdownField<DefectType>(
+          label: t.fieldDefectType,
+          hint: t.reportTypeHint,
+          prefixIcon: Icons.category_outlined,
+          value: _selected,
+          options: options,
+          enabled: !_isSaving,
+          onChanged: (type) => setState(() => _selected = type),
+        ),
+        if (_selected != null) ...[
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(
+                Icons.alt_route_rounded,
+                size: 14,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _selected!.department.label(t),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+        const SizedBox(height: 14),
+        AppButton(
+          label: t.classifySave,
+          icon: Icons.check_rounded,
+          isLoading: _isSaving,
+          onPressed: canSave ? _save : null,
+        ),
+        if (unchanged) ...[
+          const SizedBox(height: 8),
+          Text(
+            t.classifyUnchanged,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: AppColors.textMuted,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

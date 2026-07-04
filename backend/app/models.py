@@ -33,6 +33,10 @@ class Defect(SQLModel, table=True):
     department: str
     submitted_by_id: str = Field(index=True)
     submitted_by_name: str
+    # Name of the driver the defect is about. Usually entered by the
+    # dispatcher filing the report on the driver's behalf (from their paper
+    # card / phone call) rather than the driver logging in themselves.
+    driver_name: Optional[str] = None
     image_base64: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None

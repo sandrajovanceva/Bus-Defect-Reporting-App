@@ -3,6 +3,7 @@
 SAMPLE_DEFECTS = [
     {
         "bus_number": "412",
+        "driver_name": "Горан Петровски",
         "type": "brakes",
         "priority": "high",
         "status": "inProgress",
@@ -13,6 +14,7 @@ SAMPLE_DEFECTS = [
     },
     {
         "bus_number": "305",
+        "driver_name": "Марија Стојановска",
         "type": "electrical",
         "priority": "medium",
         "status": "newReport",
@@ -23,6 +25,7 @@ SAMPLE_DEFECTS = [
     },
     {
         "bus_number": "118",
+        "driver_name": "Александар Ристовски",
         "type": "doors",
         "priority": "low",
         "status": "resolved",
@@ -33,6 +36,7 @@ SAMPLE_DEFECTS = [
     },
     {
         "bus_number": "720",
+        "driver_name": "Дарко Николовски",
         "type": "mechanical",
         "priority": "high",
         "status": "inProgress",
@@ -43,6 +47,7 @@ SAMPLE_DEFECTS = [
     },
     {
         "bus_number": "233",
+        "driver_name": "Слаѓана Ефтимова",
         "type": "lights",
         "priority": "medium",
         "status": "newReport",
@@ -53,6 +58,7 @@ SAMPLE_DEFECTS = [
     },
     {
         "bus_number": "540",
+        "driver_name": "Игор Трајковски",
         "type": "climate",
         "priority": "low",
         "status": "rejected",
@@ -63,6 +69,7 @@ SAMPLE_DEFECTS = [
     },
     {
         "bus_number": "401",
+        "driver_name": "Владимир Ангеловски",
         "type": "bodywork",
         "priority": "low",
         "status": "newReport",
@@ -73,6 +80,7 @@ SAMPLE_DEFECTS = [
     },
     {
         "bus_number": "612",
+        "driver_name": "Билјана Костова",
         "type": "other",
         "priority": "medium",
         "status": "inProgress",

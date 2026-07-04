@@ -4,6 +4,9 @@ import '../l10n/app_localizations.dart';
 import 'maintenance_department.dart';
 
 enum DefectType {
+  /// Not yet classified — the state every new report starts in until
+  /// Арматура reviews it and picks the real category.
+  unclassified,
   electrical,
   mechanical,
   doors,
@@ -17,6 +20,8 @@ enum DefectType {
 extension DefectTypeX on DefectType {
   String label(AppLocalizations t) {
     switch (this) {
+      case DefectType.unclassified:
+        return t.typeUnclassified;
       case DefectType.electrical:
         return t.typeElectrical;
       case DefectType.mechanical:
@@ -38,6 +43,8 @@ extension DefectTypeX on DefectType {
 
   IconData get icon {
     switch (this) {
+      case DefectType.unclassified:
+        return Icons.pending_outlined;
       case DefectType.electrical:
         return Icons.bolt_rounded;
       case DefectType.mechanical:
@@ -59,6 +66,8 @@ extension DefectTypeX on DefectType {
 
   MaintenanceDepartment get department {
     switch (this) {
+      case DefectType.unclassified:
+        return MaintenanceDepartment.unassigned;
       case DefectType.electrical:
       case DefectType.lights:
       case DefectType.climate:

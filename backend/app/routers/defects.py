@@ -10,11 +10,18 @@ from ..database import get_session
 from ..deps import get_current_user
 from ..models import Defect, User
 from ..sample_data import SAMPLE_DEFECTS
-from ..schemas import DefectCreate, DefectDetail, DefectSummary, StatusUpdate
+from ..schemas import (
+    DefectCreate,
+    DefectDetail,
+    DefectSummary,
+    StatusUpdate,
+    TypeUpdate,
+)
 
 router = APIRouter(prefix="/defects", tags=["defects"])
 
 DEPARTMENT_BY_TYPE = {
+    "unclassified": "unassigned",
     "electrical": "electrical",
     "lights": "electrical",
     "climate": "electrical",
@@ -25,10 +32,30 @@ DEPARTMENT_BY_TYPE = {
     "other": "general",
 }
 
+TYPE_LABELS = {
+    "unclassified": "UNCLASSIFIED",
+    "electrical": "ELECTRICAL",
+    "lights": "LIGHTS",
+    "climate": "HEATING/AC",
+    "mechanical": "MECHANICAL",
+    "brakes": "BRAKES",
+    "bodywork": "BODYWORK",
+    "doors": "DOORS",
+    "other": "OTHER",
+}
+
+# Statuses mirror the physical workflow: a report comes in (newReport), goes
+# to the Арматура (fittings) department which determines the defect category
+# — electrical / mechanical / bravari (armaturaReview), gets assigned and
+# worked on (inProgress), is fixed and signed off (resolved), and finally
+# cleared at the main gate to rejoin traffic (returnedToService). A report
+# can be rejected at any point.
 STATUS_LABELS = {
     "newReport": "NEW",
+    "armaturaReview": "AT ARMATURA",
     "inProgress": "IN PROGRESS",
     "resolved": "RESOLVED",
+    "returnedToService": "RETURNED TO SERVICE",
     "rejected": "REJECTED",
 }
 
@@ -61,6 +88,8 @@ def create_defect(
 ):
     if body.type not in DEPARTMENT_BY_TYPE:
         raise HTTPException(status_code=422, detail="Unknown defect type")
+    if not body.driver_name.strip():
+        raise HTTPException(status_code=422, detail="Driver name is required")
 
     now = datetime.utcnow()
     defect = Defect(
@@ -73,6 +102,7 @@ def create_defect(
         department=DEPARTMENT_BY_TYPE[body.type],
         submitted_by_id=current.id,
         submitted_by_name=current.full_name,
+        driver_name=body.driver_name.strip(),
         image_base64=body.image_base64,
         latitude=body.latitude,
         longitude=body.longitude,
@@ -137,6 +167,7 @@ def seed_defects(
                 department=DEPARTMENT_BY_TYPE[sample["type"]],
                 submitted_by_id=current.id,
                 submitted_by_name=current.full_name,
+                driver_name=sample.get("driver_name", "Возач"),
                 latitude=sample["lat"],
                 longitude=sample["lng"],
                 history=history,
@@ -191,6 +222,55 @@ def update_status(
             "description": (
                 f"Status changed: {STATUS_LABELS.get(previous, previous)} -> "
                 f"{STATUS_LABELS[body.status]}."
+            ),
+            "changed_by_name": current.full_name,
+            "changed_at": now.isoformat(),
+        }
+    )
+    defect.history = history
+    session.add(defect)
+    session.commit()
+    session.refresh(defect)
+    return defect
+
+
+@router.patch("/{defect_id}/type", response_model=DefectDetail)
+def reclassify_defect(
+    defect_id: str,
+    body: TypeUpdate,
+    current: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Armatura-department classification: pins down the actual defect
+    category (and therefore which department it's routed to), which may
+    differ from whatever the reporter guessed when filing the report."""
+    if current.role != "dispatcher":
+        raise HTTPException(
+            status_code=403, detail="Only dispatchers can classify a defect"
+        )
+    if body.type not in DEPARTMENT_BY_TYPE:
+        raise HTTPException(status_code=422, detail="Unknown defect type")
+    if body.type == "unclassified":
+        raise HTTPException(
+            status_code=422, detail="Pick an actual category, not unclassified"
+        )
+
+    defect = session.get(Defect, defect_id)
+    if not defect:
+        raise HTTPException(status_code=404, detail="Defect not found")
+
+    previous_type = defect.type
+    now = datetime.utcnow()
+    defect.type = body.type
+    defect.department = DEPARTMENT_BY_TYPE[body.type]
+    defect.updated_at = now
+    history = list(defect.history or [])
+    history.append(
+        {
+            "type": "departmentChange",
+            "description": (
+                f"Classified by Armatura: {TYPE_LABELS.get(previous_type, previous_type)} "
+                f"-> {TYPE_LABELS[body.type]} ({defect.department})."
             ),
             "changed_by_name": current.full_name,
             "changed_at": now.isoformat(),

@@ -12,6 +12,11 @@ import '../../widgets/status_pill.dart';
 class ManagementScreen extends ConsumerWidget {
   const ManagementScreen({super.key});
 
+  static bool _isActiveStatus(DefectStatus status) =>
+      status == DefectStatus.newReport ||
+      status == DefectStatus.armaturaReview ||
+      status == DefectStatus.inProgress;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final defectsState = ref.watch(defectProvider);
@@ -49,19 +54,12 @@ class ManagementScreen extends ConsumerWidget {
       for (final s in DefectStatus.values)
         s: defects.where((d) => d.status == s).length,
     };
-    final active = defects
-        .where(
-          (d) =>
-              d.status == DefectStatus.newReport ||
-              d.status == DefectStatus.inProgress,
-        )
-        .toList();
+    final active = defects.where((d) => _isActiveStatus(d.status)).toList();
     final Map<String, int> busTotal = {};
     final Map<String, int> busActive = {};
     for (final d in defects) {
       busTotal[d.busNumber] = (busTotal[d.busNumber] ?? 0) + 1;
-      if (d.status == DefectStatus.newReport ||
-          d.status == DefectStatus.inProgress) {
+      if (_isActiveStatus(d.status)) {
         busActive[d.busNumber] = (busActive[d.busNumber] ?? 0) + 1;
       }
     }
@@ -177,31 +175,35 @@ class _StatusGrid extends StatelessWidget {
   final Map<DefectStatus, int> statusCounts;
   final int total;
 
+  String _labelFor(DefectStatus status, AppLocalizations t) {
+    switch (status) {
+      case DefectStatus.newReport:
+        return t.statusNew;
+      case DefectStatus.armaturaReview:
+        return t.statusArmaturaReview;
+      case DefectStatus.inProgress:
+        return t.statusInProgress;
+      case DefectStatus.resolved:
+        return t.statusResolved;
+      case DefectStatus.returnedToService:
+        return t.statusReturnedToService;
+      case DefectStatus.rejected:
+        return t.statusRejected;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final items = [
-      (
-        DefectStatus.newReport,
-        t.statusNew,
-        statusCounts[DefectStatus.newReport] ?? 0,
-      ),
-      (
-        DefectStatus.inProgress,
-        t.statusInProgress,
-        statusCounts[DefectStatus.inProgress] ?? 0,
-      ),
-      (
-        DefectStatus.resolved,
-        t.statusResolved,
-        statusCounts[DefectStatus.resolved] ?? 0,
-      ),
-      (
-        DefectStatus.rejected,
-        t.statusRejected,
-        statusCounts[DefectStatus.rejected] ?? 0,
-      ),
-    ];
+    final items = DefectStatus.values
+        .map(
+          (status) => (
+            status,
+            _labelFor(status, t),
+            statusCounts[status] ?? 0,
+          ),
+        )
+        .toList();
 
     return Column(
       children: [
@@ -240,45 +242,30 @@ class _StatusGrid extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                status: items[0].$1,
-                label: items[0].$2,
-                count: items[0].$3,
+        for (var i = 0; i < items.length; i += 2) ...[
+          if (i > 0) const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  status: items[i].$1,
+                  label: items[i].$2,
+                  count: items[i].$3,
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _StatCard(
-                status: items[1].$1,
-                label: items[1].$2,
-                count: items[1].$3,
+              const SizedBox(width: 8),
+              Expanded(
+                child: i + 1 < items.length
+                    ? _StatCard(
+                        status: items[i + 1].$1,
+                        label: items[i + 1].$2,
+                        count: items[i + 1].$3,
+                      )
+                    : const SizedBox.shrink(),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                status: items[2].$1,
-                label: items[2].$2,
-                count: items[2].$3,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _StatCard(
-                status: items[3].$1,
-                label: items[3].$2,
-                count: items[3].$3,
-              ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -430,6 +417,8 @@ class _DeptRow extends StatelessWidget {
 
   IconData get _icon {
     switch (dept) {
+      case MaintenanceDepartment.unassigned:
+        return Icons.pending_outlined;
       case MaintenanceDepartment.electrical:
         return Icons.bolt_rounded;
       case MaintenanceDepartment.mechanical:

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/defect_history_entry.dart';
@@ -12,6 +13,7 @@ import 'auth_service.dart';
 class DefectDraft {
   const DefectDraft({
     required this.busNumber,
+    required this.driverName,
     required this.type,
     required this.priority,
     required this.description,
@@ -21,6 +23,11 @@ class DefectDraft {
   });
 
   final String busNumber;
+
+  /// Name of the driver the defect is about (may differ from whoever is
+  /// logged in and submitting the report, e.g. a dispatcher filing it on
+  /// the driver's behalf).
+  final String driverName;
   final DefectType type;
   final DefectPriority priority;
   final String description;
@@ -50,35 +57,92 @@ class DefectRepository {
   }
 
   Future<String> createDefect(DefectDraft draft) async {
-    final res = await _api.dio.post<Map<String, dynamic>>(
-      '/defects',
-      data: buildCreatePayload(draft),
-    );
-    return res.data!['id'] as String;
+    try {
+      final res = await _api.dio.post<Map<String, dynamic>>(
+        '/defects',
+        data: buildCreatePayload(draft),
+      );
+      return res.data!['id'] as String;
+    } on DioException catch (e) {
+      throw DefectFailure(_mapDioError(e));
+    }
   }
 
   Future<void> updateStatus({
     required String defectId,
     required DefectStatus status,
   }) async {
-    await _api.dio.patch<Map<String, dynamic>>(
-      '/defects/$defectId/status',
-      data: {'status': status.name},
-    );
+    try {
+      await _api.dio.patch<Map<String, dynamic>>(
+        '/defects/$defectId/status',
+        data: {'status': status.name},
+      );
+    } on DioException catch (e) {
+      throw DefectFailure(_mapDioError(e));
+    }
+  }
+
+  /// Armatura classification: pins down the actual defect type (and
+  /// therefore department), which may differ from the reporter's initial
+  /// guess when the report was filed.
+  Future<void> reclassify({
+    required String defectId,
+    required DefectType type,
+  }) async {
+    try {
+      await _api.dio.patch<Map<String, dynamic>>(
+        '/defects/$defectId/type',
+        data: {'type': type.name},
+      );
+    } on DioException catch (e) {
+      throw DefectFailure(_mapDioError(e));
+    }
   }
 
   Future<SeedResult> seedSampleDefects() async {
-    final res = await _api.dio.post<Map<String, dynamic>>('/defects/seed');
-    final data = res.data ?? const {};
-    return (
-      seeded: (data['seeded'] as num?)?.toInt() ?? 0,
-      existing: (data['existing'] as num?)?.toInt() ?? 0,
-    );
+    try {
+      final res = await _api.dio.post<Map<String, dynamic>>('/defects/seed');
+      final data = res.data ?? const {};
+      return (
+        seeded: (data['seeded'] as num?)?.toInt() ?? 0,
+        existing: (data['existing'] as num?)?.toInt() ?? 0,
+      );
+    } on DioException catch (e) {
+      throw DefectFailure(_mapDioError(e));
+    }
+  }
+
+  /// Turns a Dio error into a user-facing message, preferring the backend's
+  /// own `detail` field (validation errors, role checks, etc.) so real
+  /// causes surface instead of a generic "check your connection" message.
+  static String _mapDioError(DioException e) {
+    final data = e.response?.data;
+    if (data is Map && data['detail'] is String) {
+      return data['detail'] as String;
+    }
+    if (data is Map && data['detail'] is List && data['detail'].isNotEmpty) {
+      final first = data['detail'].first;
+      if (first is Map && first['msg'] is String) {
+        return first['msg'] as String;
+      }
+    }
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.connectionError:
+      case DioExceptionType.receiveTimeout:
+        return 'Cannot reach the server. Make sure the backend is running.';
+      default:
+        final status = e.response?.statusCode;
+        return status != null
+            ? 'Server error ($status). Please try again.'
+            : 'Something went wrong. Please try again.';
+    }
   }
 
   static Map<String, dynamic> buildCreatePayload(DefectDraft draft) {
     return {
       'bus_number': draft.busNumber.trim(),
+      'driver_name': draft.driverName.trim(),
       'type': draft.type.name,
       'priority': draft.priority.name,
       'description': draft.description.trim(),
@@ -118,6 +182,10 @@ class DefectRepository {
       submittedAt: _parseDate(data['created_at']) ?? DateTime.now(),
       submittedById: (data['submitted_by_id'] as String?) ?? '',
       submittedByName: (data['submitted_by_name'] as String?) ?? 'Transit user',
+      driverName:
+          (data['driver_name'] as String?)?.trim().isNotEmpty == true
+          ? (data['driver_name'] as String)
+          : ((data['submitted_by_name'] as String?) ?? 'Transit user'),
       imageBase64: data['image_base64'] as String?,
       latitude: _toDouble(data['latitude']),
       longitude: _toDouble(data['longitude']),

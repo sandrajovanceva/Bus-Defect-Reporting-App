@@ -243,6 +243,7 @@ class _FilterBar extends StatelessWidget {
                 ),
                 const _Divider(),
                 ...[
+                  DefectType.unclassified,
                   DefectType.brakes,
                   DefectType.electrical,
                   DefectType.mechanical,
@@ -390,6 +391,15 @@ class _DefectTile extends StatelessWidget {
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.textPrimary,
                     ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    defect.driverName,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: AppColors.textMuted,
+                      fontSize: 10,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
                   Row(

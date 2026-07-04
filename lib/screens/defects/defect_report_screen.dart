@@ -6,14 +6,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/defect_priority.dart';
 import '../../models/defect_type.dart';
-import '../../models/maintenance_department.dart';
+import '../../models/user_role.dart';
 import '../../services/auth_service.dart';
 import '../../services/defect_service.dart';
 import '../../services/location_service.dart';
+import '../../services/user_service.dart';
 import '../../widgets/widgets.dart';
 
 class DefectReportScreen extends ConsumerStatefulWidget {
@@ -29,7 +31,7 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
   final _descriptionController = TextEditingController();
   final _imagePicker = ImagePicker();
 
-  DefectType? _selectedType;
+  String? _selectedDriverId;
   DefectPriority _selectedPriority = DefectPriority.medium;
   XFile? _attachment;
   Uint8List? _attachmentBytes;
@@ -43,6 +45,13 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
     _busNumberController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  List<StaffUser> _activeDrivers() {
+    final staff = ref.read(staffProvider).value ?? const <StaffUser>[];
+    final drivers = staff.where((u) => u.role.isDriver && u.isActive).toList()
+      ..sort((a, b) => a.fullName.compareTo(b.fullName));
+    return drivers;
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -166,6 +175,19 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
         throw _SubmitException(AppLocalizations.of(context).reportSignInFirst);
       }
 
+      String driverName;
+      if (user.role.isDispatcher) {
+        final match = _activeDrivers().where((d) => d.id == _selectedDriverId);
+        if (match.isEmpty) {
+          throw _SubmitException(
+            AppLocalizations.of(context).validationDriverRequired,
+          );
+        }
+        driverName = match.first.fullName;
+      } else {
+        driverName = user.fullName;
+      }
+
       final imageBase64 = _attachmentBytes != null
           ? base64Encode(_attachmentBytes!)
           : null;
@@ -175,7 +197,8 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
           .createDefect(
             DefectDraft(
               busNumber: _busNumberController.text,
-              type: _selectedType!,
+              driverName: driverName,
+              type: DefectType.unclassified,
               priority: _selectedPriority,
               description: _descriptionController.text,
               imageBase64: imageBase64,
@@ -240,15 +263,9 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
     final now = DateTime.now();
     final t = AppLocalizations.of(context);
 
-    final dropdownOptions = DefectType.values
-        .map(
-          (type) => AppDropdownOption<DefectType>(
-            value: type,
-            label: type.label(t),
-            icon: type.icon,
-          ),
-        )
-        .toList();
+    final currentUser = ref.watch(authProvider).value;
+    final isDispatcher = currentUser?.role.isDispatcher ?? false;
+    final staffState = isDispatcher ? ref.watch(staffProvider) : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -304,26 +321,22 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
                               return null;
                             },
                           ),
+                          const SizedBox(height: 16),
+                          _DriverField(
+                            isDispatcher: isDispatcher,
+                            ownName: currentUser?.fullName,
+                            staffState: staffState,
+                            selectedId: _selectedDriverId,
+                            enabled: !_isSubmitting,
+                            onChanged: (id) =>
+                                setState(() => _selectedDriverId = id),
+                            onRetry: () => ref.invalidate(staffProvider),
+                            onManageDrivers: () =>
+                                context.push(AppRoutes.staff),
+                          ),
                           const SizedBox(height: 28),
                           SectionHeader(title: t.sectionDefect),
-                          AppDropdownField<DefectType>(
-                            label: t.fieldDefectType,
-                            hint: t.reportTypeHint,
-                            prefixIcon: Icons.category_outlined,
-                            value: _selectedType,
-                            options: dropdownOptions,
-                            enabled: !_isSubmitting,
-                            onChanged: (type) =>
-                                setState(() => _selectedType = type),
-                            validator: (type) =>
-                                type == null ? t.validationTypeRequired : null,
-                          ),
-                          if (_selectedType != null) ...[
-                            const SizedBox(height: 10),
-                            _DepartmentBadge(
-                              department: _selectedType!.department,
-                            ),
-                          ],
+                          _HelperNote(text: t.reportPendingClassification),
                           const SizedBox(height: 20),
                           _PrioritySelector(
                             selected: _selectedPriority,
@@ -395,6 +408,132 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
 class _SubmitException implements Exception {
   const _SubmitException(this.message);
   final String message;
+}
+
+/// Driver picker for the report form.
+///
+/// Dispatchers filing a report on a driver's behalf (from a paper card /
+/// phone call) pick from the already-registered driver accounts, so nobody
+/// has to retype a name that's already in the system. If a driver is signed
+/// in and reporting for themselves, the field just shows their own name.
+class _DriverField extends StatelessWidget {
+  const _DriverField({
+    required this.isDispatcher,
+    required this.ownName,
+    required this.staffState,
+    required this.selectedId,
+    required this.enabled,
+    required this.onChanged,
+    required this.onRetry,
+    required this.onManageDrivers,
+  });
+
+  final bool isDispatcher;
+  final String? ownName;
+  final AsyncValue<List<StaffUser>>? staffState;
+  final String? selectedId;
+  final bool enabled;
+  final ValueChanged<String?> onChanged;
+  final VoidCallback onRetry;
+  final VoidCallback onManageDrivers;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+
+    if (!isDispatcher) {
+      final name = ownName ?? '';
+      return AppDropdownField<String>(
+        label: t.fieldDriverName,
+        prefixIcon: Icons.person_outline_rounded,
+        value: name,
+        options: [AppDropdownOption<String>(value: name, label: name)],
+        enabled: false,
+        onChanged: (_) {},
+      );
+    }
+
+    final state = staffState!;
+
+    if (state.isLoading && !state.hasValue) {
+      return const _DriverFieldStatus(child: LinearProgressIndicator());
+    }
+
+    if (state.hasError) {
+      return _DriverFieldStatus(
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                t.staffGenericError,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.accent),
+              ),
+            ),
+            TextButton(onPressed: onRetry, child: Text(t.actionRefresh)),
+          ],
+        ),
+      );
+    }
+
+    final drivers = (state.value ?? const <StaffUser>[])
+        .where((u) => u.role.isDriver && u.isActive)
+        .toList()
+      ..sort((a, b) => a.fullName.compareTo(b.fullName));
+
+    if (drivers.isEmpty) {
+      return _DriverFieldStatus(
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                t.reportNoDrivers,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+            TextButton(
+              onPressed: onManageDrivers,
+              child: Text(t.staffNewUser),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return AppDropdownField<String>(
+      label: t.fieldDriverName,
+      hint: t.reportDriverHint,
+      prefixIcon: Icons.person_outline_rounded,
+      value: selectedId,
+      options: drivers
+          .map(
+            (d) => AppDropdownOption<String>(value: d.id, label: d.fullName),
+          )
+          .toList(),
+      enabled: enabled,
+      onChanged: onChanged,
+      validator: (id) => id == null ? t.validationDriverRequired : null,
+    );
+  }
+}
+
+class _DriverFieldStatus extends StatelessWidget {
+  const _DriverFieldStatus({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: child,
+    );
+  }
 }
 
 class _ReportHeader extends StatelessWidget {
@@ -924,76 +1063,6 @@ class _HelperNote extends StatelessWidget {
               style: theme.textTheme.bodySmall?.copyWith(
                 color: AppColors.accentDark,
                 height: 1.4,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DepartmentBadge extends StatelessWidget {
-  const _DepartmentBadge({required this.department});
-
-  final MaintenanceDepartment department;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final t = AppLocalizations.of(context);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.alt_route_rounded,
-            size: 16,
-            color: AppColors.textSecondary,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  t.assignedDepartment,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: AppColors.textMuted,
-                    fontSize: 9,
-                    letterSpacing: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  department.label(t),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-            decoration: BoxDecoration(
-              color: AppColors.border,
-              borderRadius: BorderRadius.circular(2),
-            ),
-            child: Text(
-              department.code,
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontSize: 9,
-                letterSpacing: 1.4,
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w700,
               ),
             ),
           ),

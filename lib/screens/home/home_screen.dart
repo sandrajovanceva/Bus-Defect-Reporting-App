@@ -258,31 +258,23 @@ class HomeScreen extends ConsumerWidget {
       primary: false,
       onTap: () => context.push(AppRoutes.myDefects),
     ),
-    const SizedBox(height: 12),
-    _ActionCard(
-      title: t.actionMapTitle,
-      subtitle: t.actionMapSubtitle,
-      icon: Icons.map_outlined,
-      primary: false,
-      onTap: () => context.push(AppRoutes.defectMap),
-    ),
   ];
 
   List<Widget> _dispatcherActions(BuildContext context, AppLocalizations t) => [
     _ActionCard(
-      title: t.actionAllDefectsTitle,
-      subtitle: t.actionAllDefectsSubtitle,
-      icon: Icons.dashboard_rounded,
+      title: t.actionReportTitle,
+      subtitle: t.actionReportSubtitle,
+      icon: Icons.add_rounded,
       primary: true,
-      onTap: () => context.push(AppRoutes.myDefects),
+      onTap: () => context.push(AppRoutes.defectReport),
     ),
     const SizedBox(height: 12),
     _ActionCard(
-      title: t.actionMapTitle,
-      subtitle: t.actionMapSubtitle,
-      icon: Icons.map_outlined,
+      title: t.actionAllDefectsTitle,
+      subtitle: t.actionAllDefectsSubtitle,
+      icon: Icons.dashboard_rounded,
       primary: false,
-      onTap: () => context.push(AppRoutes.defectMap),
+      onTap: () => context.push(AppRoutes.myDefects),
     ),
     const SizedBox(height: 12),
     _ActionCard(

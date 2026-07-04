@@ -65,6 +65,7 @@ class HistoryEntry(BaseModel):
 
 class DefectCreate(BaseModel):
     bus_number: str
+    driver_name: str
     type: str
     priority: str
     description: str
@@ -85,6 +86,7 @@ class DefectSummary(BaseModel):
     department: str
     submitted_by_id: str
     submitted_by_name: str
+    driver_name: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     created_at: datetime
@@ -98,3 +100,7 @@ class DefectDetail(DefectSummary):
 
 class StatusUpdate(BaseModel):
     status: str
+
+
+class TypeUpdate(BaseModel):
+    type: str

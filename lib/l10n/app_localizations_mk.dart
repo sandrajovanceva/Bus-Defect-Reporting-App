@@ -188,6 +188,22 @@ class AppLocalizationsMk extends AppLocalizations {
   String get validationBusShort => 'Бројот на автобусот е премногу краток';
 
   @override
+  String get fieldDriverName => 'Возач';
+
+  @override
+  String get reportDriverHint => 'Име и презиме на возачот';
+
+  @override
+  String get validationDriverRequired => 'Внесете го името на возачот';
+
+  @override
+  String get validationDriverShort => 'Името на возачот е премногу кратко';
+
+  @override
+  String get reportNoDrivers =>
+      'Нема регистрирани возачи. Прво додади еден за да може да се избере тука.';
+
+  @override
   String get sectionDefect => 'Дефект';
 
   @override
@@ -344,6 +360,9 @@ class AppLocalizationsMk extends AppLocalizations {
   String get labelDriver => 'Возач';
 
   @override
+  String get labelReportedBy => 'Внесено од';
+
+  @override
   String get labelLocation => 'Локација';
 
   @override
@@ -368,13 +387,32 @@ class AppLocalizationsMk extends AppLocalizations {
   String get statusNew => 'Нов';
 
   @override
+  String get statusArmaturaReview => 'На Арматура';
+
+  @override
   String get statusInProgress => 'Во тек';
 
   @override
   String get statusResolved => 'Решено';
 
   @override
+  String get statusReturnedToService => 'Вратен во сообраќај';
+
+  @override
   String get statusRejected => 'Одбиено';
+
+  @override
+  String get sectionClassify => 'КЛАСИФИКАЦИЈА ОД АРМАТУРА';
+
+  @override
+  String get classifyHelperNote =>
+      'Арматура го прегледува пријавениот дефект и го утврдува вистинскиот тип — електрика, механика или бравари (каросерија) — со што се определува одделот каде се препраќа.';
+
+  @override
+  String get classifySave => 'Потврди класификација';
+
+  @override
+  String get classifyUnchanged => 'Ова е веќе тековната класификација.';
 
   @override
   String get mapTitle => 'МАПА НА ДЕФЕКТИ';
@@ -503,6 +541,9 @@ class AppLocalizationsMk extends AppLocalizations {
   String get roleDispatcher => 'ДИСПЕЧЕР';
 
   @override
+  String get typeUnclassified => 'Сеуште неутврдено';
+
+  @override
   String get typeElectrical => 'Електрика';
 
   @override
@@ -527,6 +568,9 @@ class AppLocalizationsMk extends AppLocalizations {
   String get typeOther => 'Друго';
 
   @override
+  String get deptUnassigned => 'Чека преглед од Арматура';
+
+  @override
   String get deptElectrical => 'Електро оддел';
 
   @override
@@ -537,4 +581,8 @@ class AppLocalizationsMk extends AppLocalizations {
 
   @override
   String get deptGeneral => 'Општо одржување';
+
+  @override
+  String get reportPendingClassification =>
+      'Не треба да се избира категорија — Арматура ќе го прегледа описот и ќе го класифицира дефектот (електрика, механика, бравари/каросерија, итн.) штом пристигне пријавата.';
 }

@@ -16,6 +16,7 @@ class DefectModel {
     required this.submittedAt,
     required this.submittedById,
     required this.submittedByName,
+    required this.driverName,
     this.imageBase64,
     this.latitude,
     this.longitude,
@@ -33,6 +34,11 @@ class DefectModel {
   final DateTime submittedAt;
   final String submittedById;
   final String submittedByName;
+
+  /// Name of the driver the defect is about — entered by whoever files the
+  /// report (usually the dispatcher, from the driver's paper card / phone
+  /// call), which may be a different person than [submittedByName].
+  final String driverName;
   final String? imageBase64;
   final double? latitude;
   final double? longitude;
@@ -58,6 +64,7 @@ class DefectModel {
       submittedAt: submittedAt,
       submittedById: submittedById,
       submittedByName: submittedByName,
+      driverName: driverName,
       imageBase64: imageBase64 ?? this.imageBase64,
       latitude: latitude,
       longitude: longitude,

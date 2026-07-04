@@ -1,6 +1,7 @@
 import '../l10n/app_localizations.dart';
 
 enum MaintenanceDepartment {
+  unassigned,
   electrical,
   mechanical,
   bodywork,
@@ -8,6 +9,8 @@ enum MaintenanceDepartment {
 
   String label(AppLocalizations t) {
     switch (this) {
+      case MaintenanceDepartment.unassigned:
+        return t.deptUnassigned;
       case MaintenanceDepartment.electrical:
         return t.deptElectrical;
       case MaintenanceDepartment.mechanical:
@@ -21,6 +24,8 @@ enum MaintenanceDepartment {
 
   String get code {
     switch (this) {
+      case MaintenanceDepartment.unassigned:
+        return 'PEND';
       case MaintenanceDepartment.electrical:
         return 'ELEC';
       case MaintenanceDepartment.mechanical:

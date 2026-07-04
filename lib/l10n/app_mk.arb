@@ -63,6 +63,11 @@
   "reportBusHint": "пр. 412 или АА-1234-БВ",
   "validationBusRequired": "Внесете го бројот на автобусот",
   "validationBusShort": "Бројот на автобусот е премногу краток",
+  "fieldDriverName": "Возач",
+  "reportDriverHint": "Име и презиме на возачот",
+  "validationDriverRequired": "Внесете го името на возачот",
+  "validationDriverShort": "Името на возачот е премногу кратко",
+  "reportNoDrivers": "Нема регистрирани возачи. Прво додади еден за да може да се избере тука.",
   "sectionDefect": "Дефект",
   "fieldDefectType": "Тип на дефект",
   "reportTypeHint": "Изберете категорија",
@@ -114,6 +119,7 @@
   "labelDepartment": "Оддел",
   "labelSubmitted": "Поднесено",
   "labelDriver": "Возач",
+  "labelReportedBy": "Внесено од",
   "labelLocation": "Локација",
   "busNumbered": "Автобус #{bus}",
   "sectionDescription": "ОПИС",
@@ -121,9 +127,16 @@
   "sectionHistory": "ИСТОРИЈА НА ПРОМЕНИ",
   "readOnlyNotice": "Само диспечерот може да го менува статусот на извештајот.",
   "statusNew": "Нов",
+  "statusArmaturaReview": "На Арматура",
   "statusInProgress": "Во тек",
   "statusResolved": "Решено",
+  "statusReturnedToService": "Вратен во сообраќај",
   "statusRejected": "Одбиено",
+
+  "sectionClassify": "КЛАСИФИКАЦИЈА ОД АРМАТУРА",
+  "classifyHelperNote": "Арматура го прегледува пријавениот дефект и го утврдува вистинскиот тип — електрика, механика или бравари (каросерија) — со што се определува одделот каде се препраќа.",
+  "classifySave": "Потврди класификација",
+  "classifyUnchanged": "Ова е веќе тековната класификација.",
 
   "mapTitle": "МАПА НА ДЕФЕКТИ",
   "mapNoLocation": "Нема дефекти со зачувана локација.",
@@ -167,6 +180,7 @@
   "roleDriver": "ВОЗАЧ",
   "roleDispatcher": "ДИСПЕЧЕР",
 
+  "typeUnclassified": "Сеуште неутврдено",
   "typeElectrical": "Електрика",
   "typeMechanical": "Механика",
   "typeDoors": "Врати",
@@ -176,8 +190,11 @@
   "typeBodywork": "Каросерија",
   "typeOther": "Друго",
 
+  "deptUnassigned": "Чека преглед од Арматура",
   "deptElectrical": "Електро оддел",
   "deptMechanical": "Механички оддел",
   "deptBodywork": "Каросериски оддел",
-  "deptGeneral": "Општо одржување"
+  "deptGeneral": "Општо одржување",
+
+  "reportPendingClassification": "Не треба да се избира категорија — Арматура ќе го прегледа описот и ќе го класифицира дефектот (електрика, механика, бравари/каросерија, итн.) штом пристигне пријавата."
 }

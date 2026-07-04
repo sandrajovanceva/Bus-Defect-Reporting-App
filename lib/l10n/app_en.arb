@@ -65,6 +65,11 @@
   "reportBusHint": "e.g. 412 or AA-1234-BV",
   "validationBusRequired": "Enter the bus number",
   "validationBusShort": "The bus number is too short",
+  "fieldDriverName": "Driver",
+  "reportDriverHint": "Full name of the driver",
+  "validationDriverRequired": "Enter the driver's name",
+  "validationDriverShort": "The driver's name is too short",
+  "reportNoDrivers": "No drivers registered yet. Add one to select them here.",
   "sectionDefect": "Defect",
   "fieldDefectType": "Defect type",
   "reportTypeHint": "Select a category",
@@ -118,6 +123,7 @@
   "labelDepartment": "Department",
   "labelSubmitted": "Submitted",
   "labelDriver": "Driver",
+  "labelReportedBy": "Logged by",
   "labelLocation": "Location",
   "busNumbered": "Bus #{bus}",
   "@busNumbered": { "placeholders": { "bus": { "type": "String" } } },
@@ -126,9 +132,16 @@
   "sectionHistory": "CHANGE HISTORY",
   "readOnlyNotice": "Only the dispatcher can change the report status.",
   "statusNew": "New",
+  "statusArmaturaReview": "At Armatura",
   "statusInProgress": "In Progress",
   "statusResolved": "Resolved",
+  "statusReturnedToService": "Returned to service",
   "statusRejected": "Rejected",
+
+  "sectionClassify": "ARMATURA CLASSIFICATION",
+  "classifyHelperNote": "Armatura reviews the report and determines the actual defect category — electrical, mechanical or bravari (bodywork) — which sets the department it's routed to.",
+  "classifySave": "Confirm classification",
+  "classifyUnchanged": "This is already the current classification.",
 
   "mapTitle": "DEFECT MAP",
   "mapNoLocation": "No defects with a saved location.",
@@ -178,6 +191,7 @@
   "roleDriver": "DRIVER",
   "roleDispatcher": "DISPATCHER",
 
+  "typeUnclassified": "Not yet classified",
   "typeElectrical": "Electrical",
   "typeMechanical": "Mechanical",
   "typeDoors": "Doors",
@@ -187,8 +201,11 @@
   "typeBodywork": "Bodywork",
   "typeOther": "Other",
 
+  "deptUnassigned": "Pending Armatura review",
   "deptElectrical": "Electrical department",
   "deptMechanical": "Mechanical department",
   "deptBodywork": "Bodywork department",
-  "deptGeneral": "General maintenance"
+  "deptGeneral": "General maintenance",
+
+  "reportPendingClassification": "No need to pick a category — Armatura will review the description and classify the defect (electrical, mechanical, bravari/bodywork, etc.) once the report comes in."
 }

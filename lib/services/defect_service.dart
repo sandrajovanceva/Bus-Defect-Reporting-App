@@ -71,12 +71,32 @@ class DefectRepository {
   Future<void> updateStatus({
     required String defectId,
     required DefectStatus status,
+    String? note,
   }) async {
     try {
       await _api.dio.patch<Map<String, dynamic>>(
         '/defects/$defectId/status',
-        data: {'status': status.name},
+        data: {'status': status.name, if (note != null) 'note': note},
       );
+    } on DioException catch (e) {
+      throw DefectFailure(_mapDioError(e));
+    }
+  }
+
+  /// A service worker pulls a defect out of their department's queue and
+  /// starts working on it.
+  Future<void> claimDefect(String defectId) async {
+    try {
+      await _api.dio.post<Map<String, dynamic>>('/defects/$defectId/claim');
+    } on DioException catch (e) {
+      throw DefectFailure(_mapDioError(e));
+    }
+  }
+
+  /// Hands an unfinished job back to the department queue.
+  Future<void> releaseDefect(String defectId) async {
+    try {
+      await _api.dio.post<Map<String, dynamic>>('/defects/$defectId/release');
     } on DioException catch (e) {
       throw DefectFailure(_mapDioError(e));
     }
@@ -182,6 +202,8 @@ class DefectRepository {
       submittedAt: _parseDate(data['created_at']) ?? DateTime.now(),
       submittedById: (data['submitted_by_id'] as String?) ?? '',
       submittedByName: (data['submitted_by_name'] as String?) ?? 'Transit user',
+      assignedToId: data['assigned_to_id'] as String?,
+      assignedToName: data['assigned_to_name'] as String?,
       driverName:
           (data['driver_name'] as String?)?.trim().isNotEmpty == true
           ? (data['driver_name'] as String)

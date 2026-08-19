@@ -1,3 +1,4 @@
+import 'maintenance_department.dart';
 import 'user_role.dart';
 
 class UserModel {
@@ -6,6 +7,7 @@ class UserModel {
     required this.fullName,
     required this.role,
     this.email,
+    this.department,
     this.assignedBus,
     this.assignedRoute,
   });
@@ -14,6 +16,10 @@ class UserModel {
   final String fullName;
   final UserRole role;
   final String? email;
+
+  /// Maintenance department a service worker belongs to; null for drivers and
+  /// dispatchers. Scopes which defects they can see and claim.
+  final MaintenanceDepartment? department;
   final String? assignedBus;
   final String? assignedRoute;
 
@@ -24,6 +30,7 @@ class UserModel {
     String? fullName,
     UserRole? role,
     String? email,
+    MaintenanceDepartment? department,
     String? assignedBus,
     String? assignedRoute,
   }) {
@@ -32,6 +39,7 @@ class UserModel {
       fullName: fullName ?? this.fullName,
       role: role ?? this.role,
       email: email ?? this.email,
+      department: department ?? this.department,
       assignedBus: assignedBus ?? this.assignedBus,
       assignedRoute: assignedRoute ?? this.assignedRoute,
     );

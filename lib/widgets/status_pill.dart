@@ -6,6 +6,7 @@ enum DefectStatus {
   newReport,
   armaturaReview,
   inProgress,
+  onHold,
   resolved,
   returnedToService,
   rejected,
@@ -20,6 +21,8 @@ extension DefectStatusX on DefectStatus {
         return 'AT ARMATURA';
       case DefectStatus.inProgress:
         return 'IN PROGRESS';
+      case DefectStatus.onHold:
+        return 'ON HOLD';
       case DefectStatus.resolved:
         return 'RESOLVED';
       case DefectStatus.returnedToService:
@@ -37,6 +40,8 @@ extension DefectStatusX on DefectStatus {
         return AppColors.statusArmaturaReview;
       case DefectStatus.inProgress:
         return AppColors.statusInProgress;
+      case DefectStatus.onHold:
+        return AppColors.statusOnHold;
       case DefectStatus.resolved:
         return AppColors.statusResolved;
       case DefectStatus.returnedToService:

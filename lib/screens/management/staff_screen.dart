@@ -5,9 +5,19 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
+import '../../models/maintenance_department.dart';
 import '../../models/user_role.dart';
 import '../../services/user_service.dart';
 import '../../widgets/widgets.dart';
+
+/// Departments a service worker can be assigned to (mirrors the backend's
+/// VALID_DEPARTMENTS — "unassigned" is only ever a defect's pending state).
+const _serviceDepartments = [
+  MaintenanceDepartment.electrical,
+  MaintenanceDepartment.mechanical,
+  MaintenanceDepartment.bodywork,
+  MaintenanceDepartment.general,
+];
 
 String _errorText(Object error, String fallback) {
   if (error is DioException) {
@@ -120,9 +130,11 @@ class _StaffTile extends ConsumerWidget {
               borderRadius: BorderRadius.circular(2),
             ),
             child: Icon(
-              isDispatcher
-                  ? Icons.headset_mic_outlined
-                  : Icons.directions_bus_outlined,
+              switch (user.role) {
+                UserRole.dispatcher => Icons.headset_mic_outlined,
+                UserRole.service => Icons.handyman_outlined,
+                UserRole.driver => Icons.directions_bus_outlined,
+              },
               size: 20,
               color: isDispatcher ? AppColors.accent : AppColors.textSecondary,
             ),
@@ -149,6 +161,16 @@ class _StaffTile extends ConsumerWidget {
                     ],
                   ],
                 ),
+                if (user.department != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    user.department!.label(t),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: AppColors.accent,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
                 const SizedBox(height: 2),
                 Text(
                   user.email,
@@ -272,6 +294,7 @@ class _AddUserSheetState extends ConsumerState<_AddUserSheet> {
   final _routeController = TextEditingController();
 
   UserRole _role = UserRole.driver;
+  MaintenanceDepartment? _department;
   bool _isSaving = false;
   String? _error;
 
@@ -299,6 +322,7 @@ class _AddUserSheetState extends ConsumerState<_AddUserSheet> {
             password: _passwordController.text,
             fullName: _nameController.text,
             role: _role,
+            department: _role.isService ? _department : null,
             assignedBus: _role.isDriver ? _busController.text : null,
             assignedRoute: _role.isDriver ? _routeController.text : null,
           );
@@ -347,8 +371,32 @@ class _AddUserSheetState extends ConsumerState<_AddUserSheet> {
               const SizedBox(height: 8),
               _RoleToggle(
                 role: _role,
-                onChanged: (r) => setState(() => _role = r),
+                onChanged: (r) => setState(() {
+                  _role = r;
+                  if (!r.isService) _department = null;
+                }),
               ),
+              if (_role.isService) ...[
+                const SizedBox(height: 16),
+                AppDropdownField<MaintenanceDepartment>(
+                  label: t.fieldDepartment,
+                  hint: t.reportTypeHint,
+                  prefixIcon: Icons.handyman_outlined,
+                  value: _department,
+                  enabled: !_isSaving,
+                  options: _serviceDepartments
+                      .map(
+                        (d) => AppDropdownOption<MaintenanceDepartment>(
+                          value: d,
+                          label: d.label(t),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (d) => setState(() => _department = d),
+                  validator: (d) =>
+                      d == null ? t.validationDepartmentRequired : null,
+                ),
+              ],
               const SizedBox(height: 16),
               AppTextField(
                 label: t.fieldFullName,

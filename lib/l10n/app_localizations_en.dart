@@ -540,6 +540,82 @@ class AppLocalizationsEn extends AppLocalizations {
   String get roleDispatcher => 'DISPATCHER';
 
   @override
+  String get roleService => 'SERVICE';
+
+  @override
+  String get fieldDepartment => 'Department';
+
+  @override
+  String get validationDepartmentRequired => 'Select a department';
+
+  @override
+  String get statusOnHold => 'On Hold';
+
+  @override
+  String get labelAssignedTo => 'Assigned to';
+
+  @override
+  String get serviceUnassigned => 'Unassigned';
+
+  @override
+  String get actionServiceQueueTitle => 'Work queue';
+
+  @override
+  String get actionServiceQueueSubtitle => 'Claim and complete repairs';
+
+  @override
+  String get serviceQueueTitle => 'WORK QUEUE';
+
+  @override
+  String get serviceTabQueue => 'Queue';
+
+  @override
+  String get serviceTabMine => 'My jobs';
+
+  @override
+  String get serviceQueueEmpty => 'Nothing is waiting for your department.';
+
+  @override
+  String get serviceMineEmpty => 'You have no assigned jobs.';
+
+  @override
+  String get serviceNoDepartment =>
+      'Your account has no department assigned. Contact dispatch.';
+
+  @override
+  String get serviceClaim => 'Claim';
+
+  @override
+  String get serviceRelease => 'Return to queue';
+
+  @override
+  String get serviceHold => 'Put on hold';
+
+  @override
+  String get serviceResume => 'Resume work';
+
+  @override
+  String get serviceResolve => 'Mark resolved';
+
+  @override
+  String get serviceConfirm => 'Confirm';
+
+  @override
+  String get serviceHoldReason => 'Why is it on hold? e.g. waiting for parts';
+
+  @override
+  String get serviceResolveNote => 'What was done? (optional)';
+
+  @override
+  String get serviceClaimed => 'Job claimed — work started.';
+
+  @override
+  String get serviceReleased => 'Job returned to the queue.';
+
+  @override
+  String get serviceStatusUpdated => 'Job updated.';
+
+  @override
   String get typeUnclassified => 'Not yet classified';
 
   @override

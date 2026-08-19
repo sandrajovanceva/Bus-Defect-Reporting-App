@@ -1094,6 +1094,156 @@ abstract class AppLocalizations {
   /// **'DISPATCHER'**
   String get roleDispatcher;
 
+  /// No description provided for @roleService.
+  ///
+  /// In en, this message translates to:
+  /// **'SERVICE'**
+  String get roleService;
+
+  /// No description provided for @fieldDepartment.
+  ///
+  /// In en, this message translates to:
+  /// **'Department'**
+  String get fieldDepartment;
+
+  /// No description provided for @validationDepartmentRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a department'**
+  String get validationDepartmentRequired;
+
+  /// No description provided for @statusOnHold.
+  ///
+  /// In en, this message translates to:
+  /// **'On Hold'**
+  String get statusOnHold;
+
+  /// No description provided for @labelAssignedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned to'**
+  String get labelAssignedTo;
+
+  /// No description provided for @serviceUnassigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Unassigned'**
+  String get serviceUnassigned;
+
+  /// No description provided for @actionServiceQueueTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Work queue'**
+  String get actionServiceQueueTitle;
+
+  /// No description provided for @actionServiceQueueSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim and complete repairs'**
+  String get actionServiceQueueSubtitle;
+
+  /// No description provided for @serviceQueueTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'WORK QUEUE'**
+  String get serviceQueueTitle;
+
+  /// No description provided for @serviceTabQueue.
+  ///
+  /// In en, this message translates to:
+  /// **'Queue'**
+  String get serviceTabQueue;
+
+  /// No description provided for @serviceTabMine.
+  ///
+  /// In en, this message translates to:
+  /// **'My jobs'**
+  String get serviceTabMine;
+
+  /// No description provided for @serviceQueueEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is waiting for your department.'**
+  String get serviceQueueEmpty;
+
+  /// No description provided for @serviceMineEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'You have no assigned jobs.'**
+  String get serviceMineEmpty;
+
+  /// No description provided for @serviceNoDepartment.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account has no department assigned. Contact dispatch.'**
+  String get serviceNoDepartment;
+
+  /// No description provided for @serviceClaim.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim'**
+  String get serviceClaim;
+
+  /// No description provided for @serviceRelease.
+  ///
+  /// In en, this message translates to:
+  /// **'Return to queue'**
+  String get serviceRelease;
+
+  /// No description provided for @serviceHold.
+  ///
+  /// In en, this message translates to:
+  /// **'Put on hold'**
+  String get serviceHold;
+
+  /// No description provided for @serviceResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume work'**
+  String get serviceResume;
+
+  /// No description provided for @serviceResolve.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark resolved'**
+  String get serviceResolve;
+
+  /// No description provided for @serviceConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get serviceConfirm;
+
+  /// No description provided for @serviceHoldReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Why is it on hold? e.g. waiting for parts'**
+  String get serviceHoldReason;
+
+  /// No description provided for @serviceResolveNote.
+  ///
+  /// In en, this message translates to:
+  /// **'What was done? (optional)'**
+  String get serviceResolveNote;
+
+  /// No description provided for @serviceClaimed.
+  ///
+  /// In en, this message translates to:
+  /// **'Job claimed — work started.'**
+  String get serviceClaimed;
+
+  /// No description provided for @serviceReleased.
+  ///
+  /// In en, this message translates to:
+  /// **'Job returned to the queue.'**
+  String get serviceReleased;
+
+  /// No description provided for @serviceStatusUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Job updated.'**
+  String get serviceStatusUpdated;
+
   /// No description provided for @typeUnclassified.
   ///
   /// In en, this message translates to:

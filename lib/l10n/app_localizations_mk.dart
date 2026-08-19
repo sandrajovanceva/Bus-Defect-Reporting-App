@@ -541,6 +541,82 @@ class AppLocalizationsMk extends AppLocalizations {
   String get roleDispatcher => 'ДИСПЕЧЕР';
 
   @override
+  String get roleService => 'СЕРВИСЕР';
+
+  @override
+  String get fieldDepartment => 'Оддел';
+
+  @override
+  String get validationDepartmentRequired => 'Изберете оддел';
+
+  @override
+  String get statusOnHold => 'На чекање';
+
+  @override
+  String get labelAssignedTo => 'Доделено на';
+
+  @override
+  String get serviceUnassigned => 'Недоделено';
+
+  @override
+  String get actionServiceQueueTitle => 'Работни налози';
+
+  @override
+  String get actionServiceQueueSubtitle => 'Преземи и заврши поправки';
+
+  @override
+  String get serviceQueueTitle => 'РАБОТНИ НАЛОЗИ';
+
+  @override
+  String get serviceTabQueue => 'Ред';
+
+  @override
+  String get serviceTabMine => 'Мои задачи';
+
+  @override
+  String get serviceQueueEmpty => 'Нема дефекти што чекаат на вашиот оддел.';
+
+  @override
+  String get serviceMineEmpty => 'Немате доделени задачи.';
+
+  @override
+  String get serviceNoDepartment =>
+      'Вашата сметка нема доделен оддел. Контактирајте го диспечерот.';
+
+  @override
+  String get serviceClaim => 'Преземи';
+
+  @override
+  String get serviceRelease => 'Врати во ред';
+
+  @override
+  String get serviceHold => 'Стави на чекање';
+
+  @override
+  String get serviceResume => 'Продолжи со работа';
+
+  @override
+  String get serviceResolve => 'Означи како решено';
+
+  @override
+  String get serviceConfirm => 'Потврди';
+
+  @override
+  String get serviceHoldReason => 'Зошто е на чекање? пр. се чекаат делови';
+
+  @override
+  String get serviceResolveNote => 'Што беше направено? (опционално)';
+
+  @override
+  String get serviceClaimed => 'Задачата е преземена — работата започна.';
+
+  @override
+  String get serviceReleased => 'Задачата е вратена во редот.';
+
+  @override
+  String get serviceStatusUpdated => 'Задачата е ажурирана.';
+
+  @override
   String get typeUnclassified => 'Сеуште неутврдено';
 
   @override

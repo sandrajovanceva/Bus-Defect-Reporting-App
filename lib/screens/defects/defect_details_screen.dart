@@ -520,6 +520,10 @@ class _HistoryTimeline extends StatelessWidget {
         return Icons.flag_outlined;
       case HistoryChangeType.departmentChange:
         return Icons.alt_route_rounded;
+      case HistoryChangeType.assignment:
+        return Icons.engineering_outlined;
+      case HistoryChangeType.note:
+        return Icons.sticky_note_2_outlined;
     }
   }
 

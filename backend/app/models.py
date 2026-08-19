@@ -16,8 +16,11 @@ class User(SQLModel, table=True):
     email: str = Field(index=True, unique=True)
     hashed_password: str
     full_name: str
-    role: str = "driver"  # "driver" | "dispatcher"
+    role: str = "driver"  # "driver" | "dispatcher" | "service"
     is_active: bool = True
+    # Which maintenance department a service worker belongs to; this scopes the
+    # defects they can see and claim. Null for drivers and dispatchers.
+    department: Optional[str] = None
     assigned_bus: Optional[str] = None
     assigned_route: Optional[str] = None
     created_at: datetime = Field(default_factory=utcnow)
@@ -37,6 +40,10 @@ class Defect(SQLModel, table=True):
     # dispatcher filing the report on the driver's behalf (from their paper
     # card / phone call) rather than the driver logging in themselves.
     driver_name: Optional[str] = None
+    # Service worker currently responsible for the repair. Null means the
+    # defect is still sitting in its department's queue.
+    assigned_to_id: Optional[str] = Field(default=None, index=True)
+    assigned_to_name: Optional[str] = None
     image_base64: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None

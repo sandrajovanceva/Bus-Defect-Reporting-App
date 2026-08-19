@@ -24,6 +24,7 @@ class UserCreate(BaseModel):
     password: str
     full_name: Optional[str] = None
     role: str = "driver"
+    department: Optional[str] = None
     assigned_bus: Optional[str] = None
     assigned_route: Optional[str] = None
 
@@ -31,6 +32,7 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     role: Optional[str] = None
+    department: Optional[str] = None
     assigned_bus: Optional[str] = None
     assigned_route: Optional[str] = None
     is_active: Optional[bool] = None
@@ -45,6 +47,7 @@ class UserRead(BaseModel):
     full_name: str
     role: str
     is_active: bool = True
+    department: Optional[str] = None
     assigned_bus: Optional[str] = None
     assigned_route: Optional[str] = None
 
@@ -87,6 +90,8 @@ class DefectSummary(BaseModel):
     submitted_by_id: str
     submitted_by_name: str
     driver_name: Optional[str] = None
+    assigned_to_id: Optional[str] = None
+    assigned_to_name: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     created_at: datetime
@@ -100,6 +105,8 @@ class DefectDetail(DefectSummary):
 
 class StatusUpdate(BaseModel):
     status: str
+    # Optional work note, e.g. "waiting for brake pads" when putting on hold.
+    note: Optional[str] = None
 
 
 class TypeUpdate(BaseModel):

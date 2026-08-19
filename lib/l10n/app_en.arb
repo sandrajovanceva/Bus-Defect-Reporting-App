@@ -190,6 +190,35 @@
 
   "roleDriver": "DRIVER",
   "roleDispatcher": "DISPATCHER",
+  "roleService": "SERVICE",
+
+  "fieldDepartment": "Department",
+  "validationDepartmentRequired": "Select a department",
+
+  "statusOnHold": "On Hold",
+  "labelAssignedTo": "Assigned to",
+  "serviceUnassigned": "Unassigned",
+
+  "actionServiceQueueTitle": "Work queue",
+  "actionServiceQueueSubtitle": "Claim and complete repairs",
+
+  "serviceQueueTitle": "WORK QUEUE",
+  "serviceTabQueue": "Queue",
+  "serviceTabMine": "My jobs",
+  "serviceQueueEmpty": "Nothing is waiting for your department.",
+  "serviceMineEmpty": "You have no assigned jobs.",
+  "serviceNoDepartment": "Your account has no department assigned. Contact dispatch.",
+  "serviceClaim": "Claim",
+  "serviceRelease": "Return to queue",
+  "serviceHold": "Put on hold",
+  "serviceResume": "Resume work",
+  "serviceResolve": "Mark resolved",
+  "serviceConfirm": "Confirm",
+  "serviceHoldReason": "Why is it on hold? e.g. waiting for parts",
+  "serviceResolveNote": "What was done? (optional)",
+  "serviceClaimed": "Job claimed — work started.",
+  "serviceReleased": "Job returned to the queue.",
+  "serviceStatusUpdated": "Job updated.",
 
   "typeUnclassified": "Not yet classified",
   "typeElectrical": "Electrical",

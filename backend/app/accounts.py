@@ -13,7 +13,26 @@ from .security import hash_password
 
 logger = logging.getLogger("uvicorn.error")
 
-VALID_ROLES = {"driver", "dispatcher"}
+VALID_ROLES = {"driver", "dispatcher", "service"}
+
+# Departments a service worker can belong to. "unassigned" is reserved for
+# defects awaiting Armatura classification and is never a worker's department.
+VALID_DEPARTMENTS = {"electrical", "mechanical", "bodywork", "general"}
+
+
+def validate_department(role: str, department: str | None) -> str | None:
+    """Service workers must belong to a real department; others must not."""
+    if role != "service":
+        return None
+    if department not in VALID_DEPARTMENTS:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "A service worker needs a department: "
+                + ", ".join(sorted(VALID_DEPARTMENTS))
+            ),
+        )
+    return department
 
 
 def validate_password(password: str) -> None:
@@ -34,12 +53,17 @@ def create_user(
     password: str,
     full_name: str | None = None,
     role: str = "driver",
+    department: str | None = None,
     assigned_bus: str | None = None,
     assigned_route: str | None = None,
 ) -> User:
     email = email.strip().lower()
     if role not in VALID_ROLES:
-        raise HTTPException(status_code=422, detail="Role must be 'driver' or 'dispatcher'")
+        raise HTTPException(
+            status_code=422,
+            detail="Role must be one of: " + ", ".join(sorted(VALID_ROLES)),
+        )
+    department = validate_department(role, department)
     validate_password(password)
 
     existing = session.exec(select(User).where(User.email == email)).first()
@@ -52,6 +76,7 @@ def create_user(
         hashed_password=hash_password(password),
         full_name=(full_name or "").strip() or email.split("@")[0],
         role=role,
+        department=department,
         assigned_bus=assigned_bus,
         assigned_route=assigned_route,
     )

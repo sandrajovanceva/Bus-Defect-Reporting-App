@@ -3,6 +3,8 @@ enum HistoryChangeType {
   statusChange,
   priorityChange,
   departmentChange,
+  assignment,
+  note,
 }
 
 class DefectHistoryEntry {

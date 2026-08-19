@@ -3,7 +3,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
-from ..accounts import VALID_ROLES, create_user, validate_password
+from ..accounts import (
+    VALID_ROLES,
+    create_user,
+    validate_department,
+    validate_password,
+)
 from ..database import get_session
 from ..deps import get_current_dispatcher
 from ..models import User
@@ -33,6 +38,7 @@ def create(
         password=body.password,
         full_name=body.full_name,
         role=body.role,
+        department=body.department,
         assigned_bus=body.assigned_bus,
         assigned_route=body.assigned_route,
     )
@@ -57,6 +63,14 @@ def update(
                 status_code=400, detail="You cannot change your own role"
             )
         user.role = body.role
+
+    # Re-validate the department whenever either the role or the department
+    # moves; it is cleared automatically for non-service roles.
+    if body.role is not None or body.department is not None:
+        department = (
+            body.department if body.department is not None else user.department
+        )
+        user.department = validate_department(user.role, department)
 
     if body.full_name is not None:
         user.full_name = body.full_name.strip() or user.full_name

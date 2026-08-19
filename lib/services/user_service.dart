@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/maintenance_department.dart';
 import '../models/user_role.dart';
 import 'api_client.dart';
 
@@ -11,6 +12,7 @@ class StaffUser {
     required this.fullName,
     required this.role,
     required this.isActive,
+    this.department,
     this.assignedBus,
     this.assignedRoute,
   });
@@ -20,11 +22,15 @@ class StaffUser {
   final String fullName;
   final UserRole role;
   final bool isActive;
+
+  /// Only set for service workers.
+  final MaintenanceDepartment? department;
   final String? assignedBus;
   final String? assignedRoute;
 
   static StaffUser fromJson(Map<String, dynamic> json) {
     final roleName = json['role'] as String?;
+    final departmentName = json['department'] as String?;
     return StaffUser(
       id: json['id'] as String,
       email: (json['email'] as String?) ?? '',
@@ -34,6 +40,12 @@ class StaffUser {
         orElse: () => UserRole.driver,
       ),
       isActive: (json['is_active'] as bool?) ?? true,
+      department: departmentName == null
+          ? null
+          : MaintenanceDepartment.values.firstWhere(
+              (value) => value.name == departmentName,
+              orElse: () => MaintenanceDepartment.general,
+            ),
       assignedBus: json['assigned_bus'] as String?,
       assignedRoute: json['assigned_route'] as String?,
     );
@@ -57,6 +69,7 @@ class UserRepository {
     required String password,
     required String fullName,
     required UserRole role,
+    MaintenanceDepartment? department,
     String? assignedBus,
     String? assignedRoute,
   }) async {
@@ -67,6 +80,7 @@ class UserRepository {
         'password': password,
         'full_name': fullName.trim(),
         'role': role.name,
+        'department': department?.name,
         'assigned_bus': assignedBus?.trim().isEmpty ?? true
             ? null
             : assignedBus!.trim(),

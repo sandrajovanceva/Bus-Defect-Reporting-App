@@ -179,6 +179,35 @@
 
   "roleDriver": "ВОЗАЧ",
   "roleDispatcher": "ДИСПЕЧЕР",
+  "roleService": "СЕРВИСЕР",
+
+  "fieldDepartment": "Оддел",
+  "validationDepartmentRequired": "Изберете оддел",
+
+  "statusOnHold": "На чекање",
+  "labelAssignedTo": "Доделено на",
+  "serviceUnassigned": "Недоделено",
+
+  "actionServiceQueueTitle": "Работни налози",
+  "actionServiceQueueSubtitle": "Преземи и заврши поправки",
+
+  "serviceQueueTitle": "РАБОТНИ НАЛОЗИ",
+  "serviceTabQueue": "Ред",
+  "serviceTabMine": "Мои задачи",
+  "serviceQueueEmpty": "Нема дефекти што чекаат на вашиот оддел.",
+  "serviceMineEmpty": "Немате доделени задачи.",
+  "serviceNoDepartment": "Вашата сметка нема доделен оддел. Контактирајте го диспечерот.",
+  "serviceClaim": "Преземи",
+  "serviceRelease": "Врати во ред",
+  "serviceHold": "Стави на чекање",
+  "serviceResume": "Продолжи со работа",
+  "serviceResolve": "Означи како решено",
+  "serviceConfirm": "Потврди",
+  "serviceHoldReason": "Зошто е на чекање? пр. се чекаат делови",
+  "serviceResolveNote": "Што беше направено? (опционално)",
+  "serviceClaimed": "Задачата е преземена — работата започна.",
+  "serviceReleased": "Задачата е вратена во редот.",
+  "serviceStatusUpdated": "Задачата е ажурирана.",
 
   "typeUnclassified": "Сеуште неутврдено",
   "typeElectrical": "Електрика",

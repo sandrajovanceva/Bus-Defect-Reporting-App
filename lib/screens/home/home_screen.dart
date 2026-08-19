@@ -223,6 +223,7 @@ class HomeScreen extends ConsumerWidget {
                       if (user.role.isDriver) ..._driverActions(context, t),
                       if (user.role.isDispatcher)
                         ..._dispatcherActions(context, t),
+                      if (user.role.isService) ..._serviceActions(context, t),
                     ],
                   ),
                 ),
@@ -254,6 +255,24 @@ class HomeScreen extends ConsumerWidget {
     _ActionCard(
       title: t.actionMyDefectsTitle,
       subtitle: t.actionMyDefectsSubtitle,
+      icon: Icons.list_alt_rounded,
+      primary: false,
+      onTap: () => context.push(AppRoutes.myDefects),
+    ),
+  ];
+
+  List<Widget> _serviceActions(BuildContext context, AppLocalizations t) => [
+    _ActionCard(
+      title: t.actionServiceQueueTitle,
+      subtitle: t.actionServiceQueueSubtitle,
+      icon: Icons.handyman_rounded,
+      primary: true,
+      onTap: () => context.push(AppRoutes.serviceQueue),
+    ),
+    const SizedBox(height: 12),
+    _ActionCard(
+      title: t.actionAllDefectsTitle,
+      subtitle: t.actionAllDefectsSubtitle,
       icon: Icons.list_alt_rounded,
       primary: false,
       onTap: () => context.push(AppRoutes.myDefects),

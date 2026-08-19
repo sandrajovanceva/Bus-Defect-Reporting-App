@@ -17,6 +17,8 @@ class DefectModel {
     required this.submittedById,
     required this.submittedByName,
     required this.driverName,
+    this.assignedToId,
+    this.assignedToName,
     this.imageBase64,
     this.latitude,
     this.longitude,
@@ -39,6 +41,11 @@ class DefectModel {
   /// report (usually the dispatcher, from the driver's paper card / phone
   /// call), which may be a different person than [submittedByName].
   final String driverName;
+
+  /// Service worker who claimed this defect; null while it waits in its
+  /// department's queue.
+  final String? assignedToId;
+  final String? assignedToName;
   final String? imageBase64;
   final double? latitude;
   final double? longitude;
@@ -46,6 +53,7 @@ class DefectModel {
   final List<DefectHistoryEntry> history;
 
   bool get hasLocation => latitude != null && longitude != null;
+  bool get isAssigned => assignedToId != null;
 
   DefectModel copyWith({
     DefectStatus? status,
@@ -65,6 +73,8 @@ class DefectModel {
       submittedById: submittedById,
       submittedByName: submittedByName,
       driverName: driverName,
+      assignedToId: assignedToId,
+      assignedToName: assignedToName,
       imageBase64: imageBase64 ?? this.imageBase64,
       latitude: latitude,
       longitude: longitude,

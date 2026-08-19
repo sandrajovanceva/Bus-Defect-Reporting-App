@@ -54,20 +54,41 @@ STATUS_LABELS = {
     "newReport": "NEW",
     "armaturaReview": "AT ARMATURA",
     "inProgress": "IN PROGRESS",
+    "onHold": "ON HOLD",
     "resolved": "RESOLVED",
     "returnedToService": "RETURNED TO SERVICE",
     "rejected": "REJECTED",
 }
+
+# A defect sits in its department's queue while it is classified but nobody has
+# picked it up yet, so those are the statuses a service worker can claim from.
+CLAIMABLE_STATUSES = {"newReport", "armaturaReview"}
+
+# Statuses a service worker may set on a job assigned to them. Returning a bus
+# to service and rejecting a report stay with the dispatcher.
+SERVICE_STATUSES = {"inProgress", "onHold", "resolved"}
 
 
 def _new_id() -> str:
     return "D-" + uuid.uuid4().hex[:6].upper()
 
 
+def _can_view(current: User, defect: Defect) -> bool:
+    if current.role == "dispatcher":
+        return True
+    if current.role == "service":
+        return defect.department == current.department
+    return defect.submitted_by_id == current.id
+
+
 def _visible_query(current: User):
     stmt = select(Defect)
-    # Dispatchers see everything; drivers only their own reports.
-    if current.role != "dispatcher":
+    if current.role == "dispatcher":
+        pass  # dispatchers see the whole fleet
+    elif current.role == "service":
+        # Service workers only ever see their own department's defects.
+        stmt = stmt.where(Defect.department == current.department)
+    else:
         stmt = stmt.where(Defect.submitted_by_id == current.id)
     return stmt.order_by(Defect.created_at.desc())
 
@@ -188,7 +209,7 @@ def get_defect(
     defect = session.get(Defect, defect_id)
     if not defect:
         raise HTTPException(status_code=404, detail="Defect not found")
-    if current.role != "dispatcher" and defect.submitted_by_id != current.id:
+    if not _can_view(current, defect):
         raise HTTPException(status_code=403, detail="Not allowed")
     return defect
 
@@ -200,16 +221,30 @@ def update_status(
     current: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    if current.role != "dispatcher":
-        raise HTTPException(
-            status_code=403, detail="Only dispatchers can change status"
-        )
     if body.status not in STATUS_LABELS:
         raise HTTPException(status_code=422, detail="Unknown status")
 
     defect = session.get(Defect, defect_id)
     if not defect:
         raise HTTPException(status_code=404, detail="Defect not found")
+
+    if current.role == "dispatcher":
+        pass  # dispatchers drive the whole workflow
+    elif current.role == "service":
+        if defect.assigned_to_id != current.id:
+            raise HTTPException(
+                status_code=403, detail="You can only update jobs assigned to you"
+            )
+        if body.status not in SERVICE_STATUSES:
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "Service workers can only set: "
+                    + ", ".join(sorted(SERVICE_STATUSES))
+                ),
+            )
+    else:
+        raise HTTPException(status_code=403, detail="Not allowed to change status")
 
     previous = defect.status
     now = datetime.utcnow()
@@ -222,6 +257,110 @@ def update_status(
             "description": (
                 f"Status changed: {STATUS_LABELS.get(previous, previous)} -> "
                 f"{STATUS_LABELS[body.status]}."
+            ),
+            "changed_by_name": current.full_name,
+            "changed_at": now.isoformat(),
+        }
+    )
+    if body.note and body.note.strip():
+        history.append(
+            {
+                "type": "note",
+                "description": body.note.strip(),
+                "changed_by_name": current.full_name,
+                "changed_at": now.isoformat(),
+            }
+        )
+    defect.history = history
+    session.add(defect)
+    session.commit()
+    session.refresh(defect)
+    return defect
+
+
+@router.post("/{defect_id}/claim", response_model=DefectDetail)
+def claim_defect(
+    defect_id: str,
+    current: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """A service worker pulls a defect out of their department's queue and
+    starts working on it."""
+    if current.role != "service":
+        raise HTTPException(
+            status_code=403, detail="Only service workers can claim a defect"
+        )
+
+    defect = session.get(Defect, defect_id)
+    if not defect:
+        raise HTTPException(status_code=404, detail="Defect not found")
+    if defect.department != current.department:
+        raise HTTPException(
+            status_code=403, detail="This defect belongs to another department"
+        )
+    if defect.assigned_to_id:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Already claimed by {defect.assigned_to_name}",
+        )
+    if defect.status not in CLAIMABLE_STATUSES:
+        raise HTTPException(
+            status_code=409, detail="This defect is not waiting in the queue"
+        )
+
+    now = datetime.utcnow()
+    defect.assigned_to_id = current.id
+    defect.assigned_to_name = current.full_name
+    defect.status = "inProgress"
+    defect.updated_at = now
+    history = list(defect.history or [])
+    history.append(
+        {
+            "type": "assignment",
+            "description": f"Claimed by {current.full_name}; work started.",
+            "changed_by_name": current.full_name,
+            "changed_at": now.isoformat(),
+        }
+    )
+    defect.history = history
+    session.add(defect)
+    session.commit()
+    session.refresh(defect)
+    return defect
+
+
+@router.post("/{defect_id}/release", response_model=DefectDetail)
+def release_defect(
+    defect_id: str,
+    current: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Give an unfinished job back to the department queue."""
+    defect = session.get(Defect, defect_id)
+    if not defect:
+        raise HTTPException(status_code=404, detail="Defect not found")
+
+    is_owner = current.role == "service" and defect.assigned_to_id == current.id
+    if not (is_owner or current.role == "dispatcher"):
+        raise HTTPException(
+            status_code=403, detail="Only the assigned worker can release this job"
+        )
+    if not defect.assigned_to_id:
+        raise HTTPException(status_code=409, detail="This defect is not assigned")
+
+    now = datetime.utcnow()
+    previous_name = defect.assigned_to_name
+    defect.assigned_to_id = None
+    defect.assigned_to_name = None
+    defect.status = "armaturaReview"
+    defect.updated_at = now
+    history = list(defect.history or [])
+    history.append(
+        {
+            "type": "assignment",
+            "description": (
+                f"Released by {previous_name} back to the "
+                f"{defect.department} queue."
             ),
             "changed_by_name": current.full_name,
             "changed_at": now.isoformat(),

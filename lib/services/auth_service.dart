@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/maintenance_department.dart';
 import '../models/user_model.dart';
 import '../models/user_role.dart';
 import 'api_client.dart';
@@ -47,11 +48,18 @@ class AuthRepository {
       (value) => value.name == roleName,
       orElse: () => UserRole.driver,
     );
+    final departmentName = json['department'] as String?;
     return UserModel(
       id: json['id'] as String,
       fullName: (json['full_name'] as String?) ?? 'Transit user',
       email: json['email'] as String?,
       role: role,
+      department: departmentName == null
+          ? null
+          : MaintenanceDepartment.values.firstWhere(
+              (value) => value.name == departmentName,
+              orElse: () => MaintenanceDepartment.general,
+            ),
       assignedBus: json['assigned_bus'] as String?,
       assignedRoute: json['assigned_route'] as String?,
     );

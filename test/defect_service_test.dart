@@ -9,6 +9,7 @@ void main() {
   test('buildCreatePayload maps a draft to the API request body', () {
     const draft = DefectDraft(
       busNumber: ' 412 ',
+      driverName: ' Marko Markovski ',
       type: DefectType.brakes,
       priority: DefectPriority.high,
       description: ' Brake pedal feels soft. ',
@@ -20,6 +21,7 @@ void main() {
     final payload = DefectRepository.buildCreatePayload(draft);
 
     expect(payload['bus_number'], '412');
+    expect(payload['driver_name'], 'Marko Markovski');
     expect(payload['type'], DefectType.brakes.name);
     expect(payload['priority'], DefectPriority.high.name);
     expect(payload['description'], 'Brake pedal feels soft.');

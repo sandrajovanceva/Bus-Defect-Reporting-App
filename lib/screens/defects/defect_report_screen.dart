@@ -11,7 +11,6 @@ import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/defect_priority.dart';
 import '../../models/defect_type.dart';
-import '../../models/user_role.dart';
 import '../../services/auth_service.dart';
 import '../../services/defect_service.dart';
 import '../../services/location_service.dart';

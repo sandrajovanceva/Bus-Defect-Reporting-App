@@ -183,6 +183,8 @@ class _StatusGrid extends StatelessWidget {
         return t.statusArmaturaReview;
       case DefectStatus.inProgress:
         return t.statusInProgress;
+      case DefectStatus.onHold:
+        return t.statusOnHold;
       case DefectStatus.resolved:
         return t.statusResolved;
       case DefectStatus.returnedToService:

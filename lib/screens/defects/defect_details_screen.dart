@@ -16,6 +16,11 @@ class DefectDetailsScreen extends ConsumerWidget {
 
   final String defectId;
 
+  /// Width at which the record and its history stop stacking and sit side by
+  /// side. Below this — every phone, and a narrow window — the layout is the
+  /// single column it has always been.
+  static const double _wideBreakpoint = 1000;
+
   String _formatDate(DateTime dt) {
     String two(int n) => n.toString().padLeft(2, '0');
     return '${two(dt.day)}.${two(dt.month)}.${dt.year}  ${two(dt.hour)}:${two(dt.minute)}';
@@ -82,92 +87,139 @@ class DefectDetailsScreen extends ConsumerWidget {
       ),
       body: SafeArea(
         top: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-              children: [
-                _InfoCard(
-                  children: [
-                    Row(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // The record itself: what the bus is, what's wrong, and what can
+            // be done about it.
+            final record = <Widget>[
+              _InfoCard(
+                children: [
+                  Row(
+                    children: [
+                      StatusPill(status: defect.status),
+                      const SizedBox(width: 10),
+                      _PriorityChip(defect: defect),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  _Row(
+                    label: t.labelBus,
+                    value: t.busNumbered(defect.busNumber),
+                  ),
+                  const SizedBox(height: 8),
+                  _Row(label: t.labelType, value: defect.type.label(t)),
+                  const SizedBox(height: 8),
+                  _Row(
+                    label: t.labelDepartment,
+                    value: defect.department.label(t),
+                  ),
+                  const SizedBox(height: 8),
+                  _Row(
+                    label: t.labelSubmitted,
+                    value: _formatDate(defect.submittedAt),
+                  ),
+                  const SizedBox(height: 8),
+                  _Row(label: t.labelDriver, value: defect.driverName),
+                  const SizedBox(height: 8),
+                  _Row(
+                    label: t.labelReportedBy,
+                    value: defect.submittedByName,
+                  ),
+                  if (defect.hasLocation) ...[
+                    const SizedBox(height: 8),
+                    _Row(
+                      label: t.labelLocation,
+                      value:
+                          '${defect.latitude!.toStringAsFixed(5)}, '
+                          '${defect.longitude!.toStringAsFixed(5)}',
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 16),
+              _SectionLabel(text: t.sectionDescription),
+              const SizedBox(height: 8),
+              _InfoCard(
+                children: [
+                  Text(
+                    defect.description,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(height: 1.5),
+                  ),
+                ],
+              ),
+              if (isDispatcher) ...[
+                const SizedBox(height: 24),
+                _SectionLabel(text: t.sectionClassify),
+                const SizedBox(height: 10),
+                _ClassifyPanel(defect: defect),
+                const SizedBox(height: 24),
+                _SectionLabel(text: t.sectionChangeStatus),
+                const SizedBox(height: 10),
+                _StatusUpdatePanel(defect: defect),
+              ],
+              if (!isDispatcher) ...[
+                const SizedBox(height: 20),
+                _ReadOnlyNotice(),
+              ],
+            ];
+
+            // The audit trail. Reference material, not part of the record.
+            final history = <Widget>[
+              if (defect.history.isNotEmpty) ...[
+                _SectionLabel(text: t.sectionHistory),
+                const SizedBox(height: 10),
+                _HistoryTimeline(entries: defect.history),
+              ],
+            ];
+
+            // On a monitor there is no reason to scroll past the record to
+            // reach its history — they belong side by side. Below the
+            // breakpoint (and on every phone) they stack as before.
+            final isWide = constraints.maxWidth >= _wideBreakpoint;
+
+            if (isWide && history.isNotEmpty) {
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1180),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        StatusPill(status: defect.status),
-                        const SizedBox(width: 10),
-                        _PriorityChip(defect: defect),
+                        Expanded(
+                          flex: 3,
+                          child: ListView(children: record),
+                        ),
+                        const SizedBox(width: 32),
+                        Expanded(
+                          flex: 2,
+                          child: ListView(children: history),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 14),
-                    _Row(
-                      label: t.labelBus,
-                      value: t.busNumbered(defect.busNumber),
-                    ),
-                    const SizedBox(height: 8),
-                    _Row(label: t.labelType, value: defect.type.label(t)),
-                    const SizedBox(height: 8),
-                    _Row(
-                      label: t.labelDepartment,
-                      value: defect.department.label(t),
-                    ),
-                    const SizedBox(height: 8),
-                    _Row(
-                      label: t.labelSubmitted,
-                      value: _formatDate(defect.submittedAt),
-                    ),
-                    const SizedBox(height: 8),
-                    _Row(label: t.labelDriver, value: defect.driverName),
-                    const SizedBox(height: 8),
-                    _Row(
-                      label: t.labelReportedBy,
-                      value: defect.submittedByName,
-                    ),
-                    if (defect.hasLocation) ...[
-                      const SizedBox(height: 8),
-                      _Row(
-                        label: t.labelLocation,
-                        value:
-                            '${defect.latitude!.toStringAsFixed(5)}, '
-                            '${defect.longitude!.toStringAsFixed(5)}',
-                      ),
+                  ),
+                ),
+              );
+            }
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                  children: [
+                    ...record,
+                    if (history.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      ...history,
                     ],
                   ],
                 ),
-                const SizedBox(height: 16),
-                _SectionLabel(text: t.sectionDescription),
-                const SizedBox(height: 8),
-                _InfoCard(
-                  children: [
-                    Text(
-                      defect.description,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.copyWith(height: 1.5),
-                    ),
-                  ],
-                ),
-                if (isDispatcher) ...[
-                  const SizedBox(height: 24),
-                  _SectionLabel(text: t.sectionClassify),
-                  const SizedBox(height: 10),
-                  _ClassifyPanel(defect: defect),
-                  const SizedBox(height: 24),
-                  _SectionLabel(text: t.sectionChangeStatus),
-                  const SizedBox(height: 10),
-                  _StatusUpdatePanel(defect: defect),
-                ],
-                if (!isDispatcher) ...[
-                  const SizedBox(height: 20),
-                  _ReadOnlyNotice(),
-                ],
-                if (defect.history.isNotEmpty) ...[
-                  const SizedBox(height: 24),
-                  _SectionLabel(text: t.sectionHistory),
-                  const SizedBox(height: 10),
-                  _HistoryTimeline(entries: defect.history),
-                ],
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

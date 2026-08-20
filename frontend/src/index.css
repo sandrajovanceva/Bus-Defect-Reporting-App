@@ -1,0 +1,150 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens.
+ *
+ * The reference is Apple's system UI: a neutral humanist sans in sentence
+ * case, generous corner radii, translucent layers over a tinted ground, and
+ * soft shadows in place of hairline outlines. Mono is kept for one job only —
+ * identifiers and figures, where character alignment carries meaning.
+ *
+ * JSP's livery red is unchanged; it is the one thing inherited from the
+ * Flutter client's palette that should survive.
+ */
+@theme {
+  /* Ground. Warm paper carried over from the Flutter client rather than
+     Apple's cool grey — the red livery sits better on a cream than on a
+     neutral, and it keeps the two clients recognisably one product. Not flat:
+     the page carries a faint wash so the frosted chrome has something to pick
+     up. */
+  --color-canvas: #f7f5f0;
+  --color-canvas-deep: #f0ece3;
+
+  /* Solid surfaces, for anything that must carry small text. */
+  --color-surface: #ffffff;
+  --color-raised: #faf9f6;
+
+  /* Warm-tinted rather than pure black alpha, so rules do not read grey
+     against the cream. */
+  --color-hairline: rgb(60 48 30 / 0.09);
+  --color-hairline-strong: rgb(60 48 30 / 0.16);
+
+  --color-accent: #dc2626;
+  --color-accent-dark: #b01c1c;
+  --color-accent-soft: #fdeceb;
+
+  /* Apple's text ramp: near-black, then two greys that stay legible. */
+  --color-ink: #1d1d1f;
+  --color-ink-2: #5f5f66;
+  --color-ink-3: #8a8a91;
+
+  --color-status-new: #e0322b;
+  --color-status-armatura: #8b5cf6;
+  --color-status-progress: #d97706;
+  --color-status-hold: #78788a;
+  --color-status-resolved: #10a37f;
+  --color-status-returned: #2563eb;
+  --color-status-rejected: #86868b;
+
+  --font-sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui,
+    sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+
+  --radius-xl: 20px;
+  --radius-lg: 16px;
+  --radius-md: 11px;
+  --radius-sm: 8px;
+
+  /* Layered and soft, the way a floating panel reads — never a hard drop. */
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.06);
+  --shadow-raised: 0 2px 4px rgb(0 0 0 / 0.05), 0 16px 40px rgb(0 0 0 / 0.10);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    /* Inter needs its optical sizing and tighter default tracking to sit like
+       SF Pro rather than like a web font. */
+    font-optical-sizing: auto;
+    letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Figures in tables and stat tiles must align down the column. */
+  table,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.021em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* A frosted layer. Only for chrome that content scrolls underneath —
+     translucency over a static background is just a tint. */
+  .glass {
+    /* Warm white, so the frost does not turn the cream beneath it grey.
+       Low enough alpha that a card passing under stays visible as a shape,
+       which is the tell that this is glass rather than paint. */
+    background-color: rgb(252 250 246 / 0.6);
+    backdrop-filter: saturate(190%) blur(22px);
+    -webkit-backdrop-filter: saturate(190%) blur(22px);
+  }
+
+  /* A pane catches light along the edge facing the light source. */
+  .glass-edge-bottom {
+    box-shadow:
+      inset 0 -1px 0 rgb(255 255 255 / 0.6),
+      0 1px 12px rgb(60 48 30 / 0.05);
+  }
+
+  .glass-edge-right {
+    box-shadow:
+      inset -1px 0 0 rgb(255 255 255 / 0.6),
+      1px 0 12px rgb(60 48 30 / 0.04);
+  }
+
+  /* Section heading. Sentence case at normal tracking — the uppercase
+     letter-spaced label was the single most dating detail in the old set. */
+  .section-title {
+    font-size: 13px;
+    font-weight: 590;
+    color: var(--color-ink-2);
+    letter-spacing: -0.005em;
+  }
+
+  .field-label {
+    font-size: 13px;
+    font-weight: 510;
+    color: var(--color-ink-2);
+  }
+}

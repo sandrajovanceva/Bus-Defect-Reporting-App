@@ -26,9 +26,30 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=utcnow)
 
 
+class Bus(SQLModel, table=True):
+    """A bus in the JSP fleet, identified by the number it runs under.
+
+    The registry exists so a defect can only ever be filed against a number
+    that actually exists: free text produced "22", "22 " and "бус 22" as three
+    different vehicles.
+    """
+
+    id: str = Field(primary_key=True)
+    number: str = Field(index=True, unique=True)
+    # "urban" | "regional" | "night", as JSP groups them.
+    category: str = "urban"
+    is_active: bool = True
+    notes: Optional[str] = None
+    created_at: datetime = Field(default_factory=utcnow)
+
+
 class Defect(SQLModel, table=True):
     id: str = Field(primary_key=True)
+    # Kept alongside [bus_id] rather than replaced by it: a number can be
+    # retired or reassigned, and an old report should still read as it was
+    # filed.
     bus_number: str
+    bus_id: Optional[str] = Field(default=None, index=True)
     type: str
     priority: str
     status: str = "newReport"

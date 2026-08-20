@@ -1333,6 +1333,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No need to pick a category — Armatura will review the description and classify the defect (electrical, mechanical, bravari/bodywork, etc.) once the report comes in.'**
   String get reportPendingClassification;
+
+  /// No description provided for @busesLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the fleet list.'**
+  String get busesLoadFailed;
+
+  /// No description provided for @categoryUrban.
+  ///
+  /// In en, this message translates to:
+  /// **'Urban'**
+  String get categoryUrban;
+
+  /// No description provided for @categoryRegional.
+  ///
+  /// In en, this message translates to:
+  /// **'Regional'**
+  String get categoryRegional;
+
+  /// No description provided for @categoryNight.
+  ///
+  /// In en, this message translates to:
+  /// **'Night'**
+  String get categoryNight;
 }
 
 class _AppLocalizationsDelegate

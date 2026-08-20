@@ -1,21 +1,17 @@
 {
   "@@locale": "en",
-
   "appTitle": "JSP Defect Reporting",
   "brandCityTransit": "CITY TRANSIT",
   "brandDefectReporting": "Defect Reporting",
   "languageEnglish": "English",
   "languageMacedonian": "Macedonian",
-
   "actionBack": "Back",
   "actionCancel": "Cancel",
   "actionRefresh": "Refresh",
   "actionReplace": "Replace",
   "actionRemove": "Remove",
   "actionClose": "Close",
-
   "splashInitializing": "Initializing",
-
   "loginTitle": "Sign in.",
   "loginSubtitle": "Use your dispatch-issued email and password to submit and track bus defect reports.",
   "fieldEmail": "Email",
@@ -29,7 +25,6 @@
   "loginSignIn": "Sign in",
   "loginNoAccess": "NO ACCESS?",
   "loginContactDispatch": "Contact dispatch to create or reset your account.",
-
   "homeTitle": "HOME",
   "greetingMorning": "GOOD MORNING",
   "greetingAfternoon": "GOOD AFTERNOON",
@@ -51,11 +46,22 @@
   "actionStaffTitle": "Users",
   "actionStaffSubtitle": "Create and manage accounts",
   "seedSuccess": "Loaded {count} demo defects.",
-  "@seedSuccess": { "placeholders": { "count": { "type": "int" } } },
+  "@seedSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "seedExisting": "You already have {count} reported defects.",
-  "@seedExisting": { "placeholders": { "count": { "type": "int" } } },
+  "@seedExisting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "seedError": "Could not load demo data.",
-
   "reportTitle": "REPORT DEFECT",
   "reportBadgeNew": "NEW REPORT",
   "reportFillForm": "Fill out the form",
@@ -94,7 +100,13 @@
   "sheetGallery": "Choose from gallery",
   "reportErrorTitle": "SUBMIT ERROR",
   "reportImageOpenError": "Could not open the image: {error}",
-  "@reportImageOpenError": { "placeholders": { "error": { "type": "String" } } },
+  "@reportImageOpenError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "reportSignInFirst": "Please sign in before submitting a report.",
   "reportSubmitError": "Unable to submit the report. Check your connection and try again.",
   "successSubmitted": "SUBMITTED",
@@ -106,7 +118,6 @@
   "locationDenied": "Location access was denied.",
   "locationDeniedForever": "Location access is permanently denied. Enable it in settings.",
   "locationError": "Could not determine the location.",
-
   "myDefectsTitleAll": "ALL DEFECTS",
   "myDefectsTitleMine": "MY DEFECTS",
   "filterClear": "CLEAR",
@@ -114,8 +125,13 @@
   "emptyFiltered": "No defects for the selected filters",
   "emptyNoDefects": "No reported defects",
   "busShort": "Bus #{bus}",
-  "@busShort": { "placeholders": { "bus": { "type": "String" } } },
-
+  "@busShort": {
+    "placeholders": {
+      "bus": {
+        "type": "String"
+      }
+    }
+  },
   "detailsTitle": "DETAILS",
   "detailsNotFound": "Defect not found.",
   "labelBus": "Bus",
@@ -126,7 +142,13 @@
   "labelReportedBy": "Logged by",
   "labelLocation": "Location",
   "busNumbered": "Bus #{bus}",
-  "@busNumbered": { "placeholders": { "bus": { "type": "String" } } },
+  "@busNumbered": {
+    "placeholders": {
+      "bus": {
+        "type": "String"
+      }
+    }
+  },
   "sectionDescription": "DESCRIPTION",
   "sectionChangeStatus": "CHANGE STATUS",
   "sectionHistory": "CHANGE HISTORY",
@@ -137,35 +159,70 @@
   "statusResolved": "Resolved",
   "statusReturnedToService": "Returned to service",
   "statusRejected": "Rejected",
-
   "sectionClassify": "ARMATURA CLASSIFICATION",
   "classifyHelperNote": "Armatura reviews the report and determines the actual defect category — electrical, mechanical or bravari (bodywork) — which sets the department it's routed to.",
   "classifySave": "Confirm classification",
   "classifyUnchanged": "This is already the current classification.",
-
   "mapTitle": "DEFECT MAP",
   "mapNoLocation": "No defects with a saved location.",
   "mapLegend": "{count} defects on the map · tap a marker for details",
-  "@mapLegend": { "placeholders": { "count": { "type": "int" } } },
+  "@mapLegend": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "mapTooltip": "Bus #{bus} · {type}",
-  "@mapTooltip": { "placeholders": { "bus": { "type": "String" }, "type": { "type": "String" } } },
-
+  "@mapTooltip": {
+    "placeholders": {
+      "bus": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      }
+    }
+  },
   "managementTitle": "MANAGEMENT",
   "mgmtStatusOverview": "STATUS OVERVIEW",
   "mgmtFleet": "FLEET",
   "mgmtBuses": "{count} buses",
-  "@mgmtBuses": { "placeholders": { "count": { "type": "int" } } },
+  "@mgmtBuses": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "mgmtDepartments": "DEPARTMENTS",
   "mgmtTotalDefects": "total defects",
   "mgmtBusTotal": "{count} defects total",
-  "@mgmtBusTotal": { "placeholders": { "count": { "type": "int" } } },
+  "@mgmtBusTotal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "mgmtBusActive": "{count} active",
-  "@mgmtBusActive": { "placeholders": { "count": { "type": "int" } } },
+  "@mgmtBusActive": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "mgmtBusOk": "OK",
   "mgmtDeptActive": "{count} active defects",
-  "@mgmtDeptActive": { "placeholders": { "count": { "type": "int" } } },
+  "@mgmtDeptActive": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "mgmtDeptNone": "No active defects",
-
   "staffTitle": "USERS",
   "staffNewUser": "NEW USER",
   "staffEmpty": "No users created.",
@@ -187,21 +244,16 @@
   "routeHint": "e.g. 22",
   "staffCreateButton": "Create user",
   "staffCreated": "User created.",
-
   "roleDriver": "DRIVER",
   "roleDispatcher": "DISPATCHER",
   "roleService": "SERVICE",
-
   "fieldDepartment": "Department",
   "validationDepartmentRequired": "Select a department",
-
   "statusOnHold": "On Hold",
   "labelAssignedTo": "Assigned to",
   "serviceUnassigned": "Unassigned",
-
   "actionServiceQueueTitle": "Work queue",
   "actionServiceQueueSubtitle": "Claim and complete repairs",
-
   "serviceQueueTitle": "WORK QUEUE",
   "serviceTabQueue": "Queue",
   "serviceTabMine": "My jobs",
@@ -219,7 +271,6 @@
   "serviceClaimed": "Job claimed — work started.",
   "serviceReleased": "Job returned to the queue.",
   "serviceStatusUpdated": "Job updated.",
-
   "typeUnclassified": "Not yet classified",
   "typeElectrical": "Electrical",
   "typeMechanical": "Mechanical",
@@ -229,12 +280,14 @@
   "typeClimate": "Heating / air conditioning",
   "typeBodywork": "Bodywork",
   "typeOther": "Other",
-
   "deptUnassigned": "Pending Armatura review",
   "deptElectrical": "Electrical department",
   "deptMechanical": "Mechanical department",
   "deptBodywork": "Bodywork department",
   "deptGeneral": "General maintenance",
-
-  "reportPendingClassification": "No need to pick a category — Armatura will review the description and classify the defect (electrical, mechanical, bravari/bodywork, etc.) once the report comes in."
+  "reportPendingClassification": "No need to pick a category — Armatura will review the description and classify the defect (electrical, mechanical, bravari/bodywork, etc.) once the report comes in.",
+  "busesLoadFailed": "Could not load the fleet list.",
+  "categoryUrban": "Urban",
+  "categoryRegional": "Regional",
+  "categoryNight": "Night"
 }

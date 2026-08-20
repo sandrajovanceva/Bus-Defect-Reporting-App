@@ -58,6 +58,30 @@ class TokenResponse(BaseModel):
     user: UserRead
 
 
+# --- buses ---
+class BusCreate(BaseModel):
+    number: str
+    category: str = "urban"
+    notes: Optional[str] = None
+
+
+class BusUpdate(BaseModel):
+    number: Optional[str] = None
+    category: Optional[str] = None
+    is_active: Optional[bool] = None
+    notes: Optional[str] = None
+
+
+class BusRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    number: str
+    category: str
+    is_active: bool = True
+    notes: Optional[str] = None
+
+
 # --- defects ---
 class HistoryEntry(BaseModel):
     type: str
@@ -82,6 +106,7 @@ class DefectSummary(BaseModel):
 
     id: str
     bus_number: str
+    bus_id: Optional[str] = None
     type: str
     priority: str
     status: str

@@ -9,7 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from .accounts import ensure_bootstrap_admin
 from .config import settings
 from .database import init_db
-from .routers import auth, defects, users
+from .fleet import link_existing_defects, seed_fleet
+from .routers import auth, buses, defects, users
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -18,6 +19,8 @@ logger = logging.getLogger("uvicorn.error")
 async def lifespan(app: FastAPI):
     init_db()
     ensure_bootstrap_admin()
+    seed_fleet()
+    link_existing_defects()
     if settings.is_secret_insecure:
         logger.warning(
             "SECRET_KEY is the insecure default — set a strong SECRET_KEY "
@@ -48,6 +51,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(buses.router)
 app.include_router(defects.router)
 
 

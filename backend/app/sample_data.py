@@ -1,8 +1,12 @@
-"""Demo defect reports positioned around Skopje for seeding."""
+"""Demo defect reports positioned around Skopje for seeding.
+
+Bus numbers are real JSP lines from the fleet registry, so seeded defects
+link to actual buses rather than inventing numbers.
+"""
 
 SAMPLE_DEFECTS = [
     {
-        "bus_number": "412",
+        "bus_number": "2",
         "driver_name": "Горан Петровски",
         "type": "brakes",
         "priority": "high",
@@ -13,7 +17,7 @@ SAMPLE_DEFECTS = [
         "hours_ago": 30,
     },
     {
-        "bus_number": "305",
+        "bus_number": "15А",
         "driver_name": "Марија Стојановска",
         "type": "electrical",
         "priority": "medium",
@@ -24,7 +28,7 @@ SAMPLE_DEFECTS = [
         "hours_ago": 4,
     },
     {
-        "bus_number": "118",
+        "bus_number": "22П",
         "driver_name": "Александар Ристовски",
         "type": "doors",
         "priority": "low",
@@ -35,7 +39,7 @@ SAMPLE_DEFECTS = [
         "hours_ago": 120,
     },
     {
-        "bus_number": "720",
+        "bus_number": "65В",
         "driver_name": "Дарко Николовски",
         "type": "mechanical",
         "priority": "high",
@@ -46,7 +50,7 @@ SAMPLE_DEFECTS = [
         "hours_ago": 52,
     },
     {
-        "bus_number": "233",
+        "bus_number": "41",
         "driver_name": "Слаѓана Ефтимова",
         "type": "lights",
         "priority": "medium",
@@ -57,7 +61,7 @@ SAMPLE_DEFECTS = [
         "hours_ago": 70,
     },
     {
-        "bus_number": "540",
+        "bus_number": "57А",
         "driver_name": "Игор Трајковски",
         "type": "climate",
         "priority": "low",
@@ -68,7 +72,7 @@ SAMPLE_DEFECTS = [
         "hours_ago": 168,
     },
     {
-        "bus_number": "401",
+        "bus_number": "9П",
         "driver_name": "Владимир Ангеловски",
         "type": "bodywork",
         "priority": "low",
@@ -79,7 +83,7 @@ SAMPLE_DEFECTS = [
         "hours_ago": 26,
     },
     {
-        "bus_number": "612",
+        "bus_number": "63",
         "driver_name": "Билјана Костова",
         "type": "other",
         "priority": "medium",

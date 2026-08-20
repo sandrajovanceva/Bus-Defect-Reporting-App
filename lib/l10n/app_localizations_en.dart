@@ -660,4 +660,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reportPendingClassification =>
       'No need to pick a category — Armatura will review the description and classify the defect (electrical, mechanical, bravari/bodywork, etc.) once the report comes in.';
+
+  @override
+  String get busesLoadFailed => 'Could not load the fleet list.';
+
+  @override
+  String get categoryUrban => 'Urban';
+
+  @override
+  String get categoryRegional => 'Regional';
+
+  @override
+  String get categoryNight => 'Night';
 }

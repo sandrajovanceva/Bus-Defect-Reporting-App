@@ -661,4 +661,16 @@ class AppLocalizationsMk extends AppLocalizations {
   @override
   String get reportPendingClassification =>
       'Не треба да се избира категорија — Арматура ќе го прегледа описот и ќе го класифицира дефектот (електрика, механика, бравари/каросерија, итн.) штом пристигне пријавата.';
+
+  @override
+  String get busesLoadFailed => 'Списокот со автобуси не се вчита.';
+
+  @override
+  String get categoryUrban => 'Градски';
+
+  @override
+  String get categoryRegional => 'Меѓуградски';
+
+  @override
+  String get categoryNight => 'Ноќни';
 }

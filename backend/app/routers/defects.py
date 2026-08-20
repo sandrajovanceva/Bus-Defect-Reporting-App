@@ -8,6 +8,7 @@ from sqlmodel import Session, select
 
 from ..database import get_session
 from ..deps import get_current_user
+from ..fleet import find_bus, require_bus
 from ..models import Defect, User
 from ..sample_data import SAMPLE_DEFECTS
 from ..schemas import (
@@ -69,6 +70,11 @@ CLAIMABLE_STATUSES = {"newReport", "armaturaReview"}
 SERVICE_STATUSES = {"inProgress", "onHold", "resolved"}
 
 
+def _bus_id_for(session, number: str) -> str | None:
+    bus = find_bus(session, number)
+    return bus.id if bus else None
+
+
 def _new_id() -> str:
     return "D-" + uuid.uuid4().hex[:6].upper()
 
@@ -112,10 +118,15 @@ def create_defect(
     if not body.driver_name.strip():
         raise HTTPException(status_code=422, detail="Driver name is required")
 
+    # The number must exist in the fleet registry. This is the check that
+    # stops "22", "22 " and "бус 22" becoming three different buses.
+    bus = require_bus(session, body.bus_number)
+
     now = datetime.utcnow()
     defect = Defect(
         id=_new_id(),
-        bus_number=body.bus_number.strip(),
+        bus_number=bus.number,
+        bus_id=bus.id,
         type=body.type,
         priority=body.priority,
         status="newReport",
@@ -181,6 +192,7 @@ def seed_defects(
             Defect(
                 id=_new_id(),
                 bus_number=sample["bus_number"],
+                bus_id=_bus_id_for(session, sample["bus_number"]),
                 type=sample["type"],
                 priority=sample["priority"],
                 status=sample["status"],

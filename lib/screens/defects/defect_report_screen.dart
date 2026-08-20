@@ -15,6 +15,7 @@ import '../../services/auth_service.dart';
 import '../../services/defect_service.dart';
 import '../../services/location_service.dart';
 import '../../services/user_service.dart';
+import '../../widgets/bus_picker_field.dart';
 import '../../widgets/widgets.dart';
 
 class DefectReportScreen extends ConsumerStatefulWidget {
@@ -26,10 +27,12 @@ class DefectReportScreen extends ConsumerStatefulWidget {
 
 class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _busNumberController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _imagePicker = ImagePicker();
 
+  /// Chosen from the fleet registry; free text is no longer accepted.
+  String? _selectedBusNumber;
+  String? _busError;
   String? _selectedDriverId;
   DefectPriority _selectedPriority = DefectPriority.medium;
   XFile? _attachment;
@@ -41,7 +44,6 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
 
   @override
   void dispose() {
-    _busNumberController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -164,6 +166,16 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
   Future<void> _submit() async {
     setState(() => _submitError = null);
 
+    // The picker is not a FormField, so the form's validate() does not cover
+    // it — the bus has to be checked on its own.
+    final busNumber = _selectedBusNumber;
+    if (busNumber == null || busNumber.isEmpty) {
+      setState(
+        () => _busError = AppLocalizations.of(context).validationBusRequired,
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
 
@@ -195,7 +207,7 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
           .read(defectRepositoryProvider)
           .createDefect(
             DefectDraft(
-              busNumber: _busNumberController.text,
+              busNumber: busNumber,
               driverName: driverName,
               type: DefectType.unclassified,
               priority: _selectedPriority,
@@ -301,24 +313,14 @@ class _DefectReportScreenState extends ConsumerState<DefectReportScreen> {
                           ],
                           const SizedBox(height: 28),
                           SectionHeader(title: t.sectionVehicle),
-                          AppTextField(
-                            label: t.fieldBusNumber,
-                            hint: t.reportBusHint,
-                            controller: _busNumberController,
-                            prefixIcon: Icons.directions_bus_filled_rounded,
-                            keyboardType: TextInputType.text,
-                            textInputAction: TextInputAction.next,
+                          BusPickerField(
+                            value: _selectedBusNumber,
                             enabled: !_isSubmitting,
-                            validator: (value) {
-                              final v = value?.trim() ?? '';
-                              if (v.isEmpty) {
-                                return t.validationBusRequired;
-                              }
-                              if (v.length < 2) {
-                                return t.validationBusShort;
-                              }
-                              return null;
-                            },
+                            errorText: _busError,
+                            onChanged: (number) => setState(() {
+                              _selectedBusNumber = number;
+                              _busError = null;
+                            }),
                           ),
                           const SizedBox(height: 16),
                           _DriverField(

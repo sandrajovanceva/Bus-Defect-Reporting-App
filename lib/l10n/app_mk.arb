@@ -1,21 +1,17 @@
 {
   "@@locale": "mk",
-
   "appTitle": "ЈСП Пријава на дефекти",
   "brandCityTransit": "ГРАДСКИ ПРЕВОЗ",
   "brandDefectReporting": "Пријава на дефекти",
   "languageEnglish": "Англиски",
   "languageMacedonian": "Македонски",
-
   "actionBack": "Назад",
   "actionCancel": "Откажи",
   "actionRefresh": "Освежи",
   "actionReplace": "Замени",
   "actionRemove": "Отстрани",
   "actionClose": "Затвори",
-
   "splashInitializing": "Се вчитува",
-
   "loginTitle": "Најави се.",
   "loginSubtitle": "Користете ги вашата е-пошта и лозинка издадени од диспечер за да поднесувате и следите пријави за дефекти.",
   "fieldEmail": "Е-пошта",
@@ -29,7 +25,6 @@
   "loginSignIn": "Најави се",
   "loginNoAccess": "НЕМАТЕ ПРИСТАП?",
   "loginContactDispatch": "Контактирајте го диспечерот за да создадете или ресетирате сметка.",
-
   "homeTitle": "ГЛАВЕН ЕКРАН",
   "greetingMorning": "ДОБРО УТРО",
   "greetingAfternoon": "ДОБАР ДЕН",
@@ -53,7 +48,6 @@
   "seedSuccess": "Внесени се {count} демо дефекти.",
   "seedExisting": "Веќе имате {count} пријавени дефекти.",
   "seedError": "Не можеше да се внесат демо податоци.",
-
   "reportTitle": "ПРИЈАВИ ДЕФЕКТ",
   "reportBadgeNew": "НОВ ИЗВЕШТАЈ",
   "reportFillForm": "Пополнете го формуларот",
@@ -103,7 +97,6 @@
   "locationDenied": "Пристапот до локацијата е одбиен.",
   "locationDeniedForever": "Пристапот до локацијата е трајно одбиен. Овозможете го од подесувањата.",
   "locationError": "Не можеше да се одреди локацијата.",
-
   "myDefectsTitleAll": "СИТЕ ДЕФЕКТИ",
   "myDefectsTitleMine": "МОИ ДЕФЕКТИ",
   "filterClear": "ИСЧИСТИ",
@@ -111,7 +104,6 @@
   "emptyFiltered": "Нема дефекти за избраните филтри",
   "emptyNoDefects": "Нема пријавени дефекти",
   "busShort": "Автобус #{bus}",
-
   "detailsTitle": "ДЕТАЛИ",
   "detailsNotFound": "Дефектот не е пронајден.",
   "labelBus": "Автобус",
@@ -132,17 +124,14 @@
   "statusResolved": "Решено",
   "statusReturnedToService": "Вратен во сообраќај",
   "statusRejected": "Одбиено",
-
   "sectionClassify": "КЛАСИФИКАЦИЈА ОД АРМАТУРА",
   "classifyHelperNote": "Арматура го прегледува пријавениот дефект и го утврдува вистинскиот тип — електрика, механика или бравари (каросерија) — со што се определува одделот каде се препраќа.",
   "classifySave": "Потврди класификација",
   "classifyUnchanged": "Ова е веќе тековната класификација.",
-
   "mapTitle": "МАПА НА ДЕФЕКТИ",
   "mapNoLocation": "Нема дефекти со зачувана локација.",
   "mapLegend": "{count} дефекти на мапата · допрете маркер за детали",
   "mapTooltip": "Автобус #{bus} · {type}",
-
   "managementTitle": "УПРАВУВАЊЕ",
   "mgmtStatusOverview": "СТАТУС ПРЕГЛЕД",
   "mgmtFleet": "ФЛОТА",
@@ -154,7 +143,6 @@
   "mgmtBusOk": "Уредно",
   "mgmtDeptActive": "{count} активни дефекти",
   "mgmtDeptNone": "Нема активни дефекти",
-
   "staffTitle": "КОРИСНИЦИ",
   "staffNewUser": "НОВ КОРИСНИК",
   "staffEmpty": "Нема креирани корисници.",
@@ -176,21 +164,16 @@
   "routeHint": "пр. 22",
   "staffCreateButton": "Креирај корисник",
   "staffCreated": "Корисникот е креиран.",
-
   "roleDriver": "ВОЗАЧ",
   "roleDispatcher": "ДИСПЕЧЕР",
   "roleService": "СЕРВИСЕР",
-
   "fieldDepartment": "Оддел",
   "validationDepartmentRequired": "Изберете оддел",
-
   "statusOnHold": "На чекање",
   "labelAssignedTo": "Доделено на",
   "serviceUnassigned": "Недоделено",
-
   "actionServiceQueueTitle": "Работни налози",
   "actionServiceQueueSubtitle": "Преземи и заврши поправки",
-
   "serviceQueueTitle": "РАБОТНИ НАЛОЗИ",
   "serviceTabQueue": "Ред",
   "serviceTabMine": "Мои задачи",
@@ -208,7 +191,6 @@
   "serviceClaimed": "Задачата е преземена — работата започна.",
   "serviceReleased": "Задачата е вратена во редот.",
   "serviceStatusUpdated": "Задачата е ажурирана.",
-
   "typeUnclassified": "Сеуште неутврдено",
   "typeElectrical": "Електрика",
   "typeMechanical": "Механика",
@@ -218,12 +200,14 @@
   "typeClimate": "Греење / климатизација",
   "typeBodywork": "Каросерија",
   "typeOther": "Друго",
-
   "deptUnassigned": "Чека преглед од Арматура",
   "deptElectrical": "Електро оддел",
   "deptMechanical": "Механички оддел",
   "deptBodywork": "Каросериски оддел",
   "deptGeneral": "Општо одржување",
-
-  "reportPendingClassification": "Не треба да се избира категорија — Арматура ќе го прегледа описот и ќе го класифицира дефектот (електрика, механика, бравари/каросерија, итн.) штом пристигне пријавата."
+  "reportPendingClassification": "Не треба да се избира категорија — Арматура ќе го прегледа описот и ќе го класифицира дефектот (електрика, механика, бравари/каросерија, итн.) штом пристигне пријавата.",
+  "busesLoadFailed": "Списокот со автобуси не се вчита.",
+  "categoryUrban": "Градски",
+  "categoryRegional": "Меѓуградски",
+  "categoryNight": "Ноќни"
 }

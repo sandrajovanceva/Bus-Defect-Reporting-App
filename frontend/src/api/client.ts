@@ -11,9 +11,17 @@ export function setToken(token: string | null) {
   else localStorage.removeItem(TOKEN_KEY)
 }
 
-/** Requests go to the same origin and are proxied to FastAPI, so there is no
- *  CORS surface in development or behind a reverse proxy in production. */
-export const api = axios.create({ baseURL: '/api' })
+/**
+ * Where the API lives.
+ *
+ * In development Vite proxies `/api` to the backend, so nothing crosses an
+ * origin. A deployed static build has no proxy, so the backend's public URL
+ * is baked in at build time via VITE_API_BASE — which means changing it
+ * requires a rebuild, not just a restart.
+ */
+const baseURL = import.meta.env.VITE_API_BASE || '/api'
+
+export const api = axios.create({ baseURL })
 
 api.interceptors.request.use((config) => {
   const token = getToken()

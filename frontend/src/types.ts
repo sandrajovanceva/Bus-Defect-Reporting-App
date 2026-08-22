@@ -4,7 +4,12 @@
  * a payload can be compared against the backend without a translation step.
  */
 
-export const USER_ROLES = ['driver', 'dispatcher', 'service'] as const
+export const USER_ROLES = [
+  'driver',
+  'dispatcher',
+  'service',
+  'armatura',
+] as const
 export type UserRole = (typeof USER_ROLES)[number]
 
 /** `unassigned` is where a defect waits for Армaтура to classify it; it is
@@ -96,6 +101,8 @@ export interface User {
 
 export interface HistoryEntry {
   type: HistoryType
+  /** Structured facts; null on entries written before this existed. */
+  meta?: Record<string, unknown> | null
   description: string
   changed_by_name: string
   changed_at: string
@@ -117,6 +124,7 @@ export interface Defect {
   driver_name: string | null
   assigned_to_id: string | null
   assigned_to_name: string | null
+  address: string | null
   latitude: number | null
   longitude: number | null
   created_at: string
@@ -126,6 +134,13 @@ export interface Defect {
 
 export interface DefectDetail extends Defect {
   image_base64: string | null
+}
+
+export interface DefectCreateBody {
+  bus_number: string
+  driver_name: string
+  description: string
+  address?: string | null
 }
 
 export interface LoginResponse {

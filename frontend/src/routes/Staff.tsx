@@ -35,15 +35,15 @@ export function Staff() {
   const [isCreating, setIsCreating] = useState(false)
 
   return (
-    <div className="p-7">
-      <div className="mb-6 flex items-center gap-4">
+    <div className="flex h-full flex-col p-7">
+      <div className="mb-6 flex shrink-0 items-center gap-4">
         <p className="text-[13px] text-ink-3">{t('staffTitle')}</p>
         <Button className="ml-auto" onClick={() => setIsCreating(true)}>
           {t('staffNewUser')}
         </Button>
       </div>
 
-      <Panel>
+      <Panel className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {isPending ? (
           <LoadingState />
         ) : error ? (
@@ -55,8 +55,9 @@ export function Staff() {
             {t('staffEmpty')}
           </p>
         ) : (
+          <div className="min-h-0 flex-1 overflow-auto">
           <table className="w-full border-collapse text-sm">
-            <thead>
+            <thead className="sticky top-0 z-10 bg-surface">
               <tr className="border-b border-hairline">
                 <th className="px-5 py-3 text-left text-[12px] font-medium text-ink-3">
                   {t('staffNameHint')}
@@ -126,6 +127,7 @@ export function Staff() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </Panel>
 

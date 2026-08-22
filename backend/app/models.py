@@ -66,6 +66,9 @@ class Defect(SQLModel, table=True):
     assigned_to_id: Optional[str] = Field(default=None, index=True)
     assigned_to_name: Optional[str] = None
     image_base64: Optional[str] = None
+    # Where the bus was. A dispatcher taking the report by radio types a
+    # street or depot name; the driver's app fills the coordinates instead.
+    address: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     history: List[dict] = Field(default_factory=list, sa_column=Column(JSON))

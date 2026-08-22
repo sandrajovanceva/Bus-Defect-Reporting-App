@@ -5,7 +5,12 @@ import { useNavigate } from 'react-router'
 
 import { ErrorState, LoadingState, Panel, StatusPill } from '../components/ui'
 import { useBuses, useDefects } from '../hooks/queries'
-import { departmentLabel, formatDateTime, typeLabel } from '../lib/domain'
+import {
+  departmentLabel,
+  formatDateTime,
+  historyText,
+  typeLabel,
+} from '../lib/domain'
 import { WORKER_DEPARTMENTS, type Defect } from '../types'
 
 /** Statuses that mean the report is finished with. */
@@ -222,7 +227,7 @@ export function Overview() {
                         >
                           {defect.bus_number}
                         </button>{' '}
-                        {entry.description}
+                        {historyText(t, entry)}
                       </p>
                       <p className="mt-0.5 text-[12px] text-ink-3">
                         {entry.changed_by_name} ·{' '}

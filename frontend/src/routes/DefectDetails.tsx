@@ -23,6 +23,7 @@ import {
   SERVICE_STATUSES,
   departmentLabel,
   formatDateTime,
+  historyText,
   statusLabel,
   typeLabel,
 } from '../lib/domain'
@@ -110,7 +111,11 @@ export function DefectDetails() {
                   value={defect.assigned_to_name}
                 />
               ) : null}
-              {defect.latitude !== null && defect.longitude !== null ? (
+              {/* An address if a dispatcher typed one, otherwise the
+                  coordinates the driver's app recorded. */}
+              {defect.address ? (
+                <Fact label={t('labelLocation')} value={defect.address} />
+              ) : defect.latitude !== null && defect.longitude !== null ? (
                 <Fact
                   label={t('labelLocation')}
                   value={`${defect.latitude.toFixed(5)}, ${defect.longitude.toFixed(5)}`}
@@ -161,11 +166,6 @@ export function DefectDetails() {
             <ServiceActions defectId={defect.id} current={defect.status} />
           ) : null}
 
-          {!isDispatcher && !isOwner ? (
-            <Panel className="p-4">
-              <p className="text-xs text-ink-3">{t('readOnlyNotice')}</p>
-            </Panel>
-          ) : null}
         </div>
 
         <div>
@@ -182,7 +182,7 @@ export function DefectDetails() {
                       key={`${entry.changed_at}-${index}`}
                       className="border-l-2 border-hairline-strong pl-4"
                     >
-                      <p className="text-sm text-ink">{entry.description}</p>
+                      <p className="text-sm text-ink">{historyText(t, entry)}</p>
                       <p className="mt-1 text-[13px] text-ink-3">
                         {entry.changed_by_name} ·{' '}
                         {formatDateTime(entry.changed_at, i18n.language)}

@@ -35,13 +35,20 @@ export function DefectTable({
   const navigate = useNavigate()
 
   if (defects.length === 0) {
-    return <EmptyState title={emptyTitle} hint={emptyHint} />
+    return (
+      <div className="min-h-0 flex-1 overflow-auto">
+        <EmptyState title={emptyTitle} hint={emptyHint} />
+      </div>
+    )
   }
 
   return (
-    <div className="overflow-x-auto">
+    // Scrolls inside its panel rather than pushing the page down, so the
+    // filters above stay reachable however long the list is.
+    <div className="min-h-0 flex-1 overflow-auto">
       <table className="w-full border-collapse">
-        <thead>
+        {/* Pinned, so the column names survive the scroll. */}
+        <thead className="sticky top-0 z-10 bg-surface">
           <tr>
             <Th>{t('colId')}</Th>
             <Th>{t('colBus')}</Th>

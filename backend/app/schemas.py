@@ -85,6 +85,10 @@ class BusRead(BaseModel):
 # --- defects ---
 class HistoryEntry(BaseModel):
     type: str
+    # Structured facts about the event. The client renders the sentence from
+    # these in the reader's language; `description` is the English fallback
+    # for entries written before this existed.
+    meta: Optional[dict] = None
     description: str
     changed_by_name: str
     changed_at: datetime
@@ -93,10 +97,11 @@ class HistoryEntry(BaseModel):
 class DefectCreate(BaseModel):
     bus_number: str
     driver_name: str
-    type: str
-    priority: str
+    # Neither type nor priority: both are Арматура's to determine once the
+    # bus reaches the depot, so a report is always filed unclassified.
     description: str
     image_base64: Optional[str] = None
+    address: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
 
@@ -117,6 +122,7 @@ class DefectSummary(BaseModel):
     driver_name: Optional[str] = None
     assigned_to_id: Optional[str] = None
     assigned_to_name: Optional[str] = None
+    address: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     created_at: datetime
@@ -136,3 +142,6 @@ class StatusUpdate(BaseModel):
 
 class TypeUpdate(BaseModel):
     type: str
+    # Арматура judges urgency at the same time as the category, so both are
+    # set in one action rather than two.
+    priority: Optional[str] = None

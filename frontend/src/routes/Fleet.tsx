@@ -64,8 +64,8 @@ export function Fleet() {
   }, [data, category])
 
   return (
-    <div className="p-7">
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+    <div className="flex h-full flex-col p-7">
+      <div className="mb-6 flex shrink-0 flex-wrap items-center gap-3">
         <Select
           value={category}
           onChange={(event) =>
@@ -99,7 +99,7 @@ export function Fleet() {
         <Button onClick={() => setIsCreating(true)}>{t('fleetNewBus')}</Button>
       </div>
 
-      <Panel className="overflow-hidden">
+      <Panel className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {isPending ? (
           <LoadingState />
         ) : error ? (
@@ -111,9 +111,9 @@ export function Fleet() {
             {t('fleetEmpty')}
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="min-h-0 flex-1 overflow-auto">
             <table className="w-full border-collapse">
-              <thead>
+              <thead className="sticky top-0 z-10 bg-surface">
                 <tr>
                   <Th>{t('colBusNumber')}</Th>
                   <Th>{t('fleetCategory')}</Th>

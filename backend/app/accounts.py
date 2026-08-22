@@ -13,7 +13,10 @@ from .security import hash_password
 
 logger = logging.getLogger("uvicorn.error")
 
-VALID_ROLES = {"driver", "dispatcher", "service"}
+# "armatura" is the fittings department: the first stop after a report is
+# filed, where the defect category — electrical / mechanical / bravari — is
+# determined and the report routed onward.
+VALID_ROLES = {"driver", "dispatcher", "service", "armatura"}
 
 # Departments a service worker can belong to. "unassigned" is reserved for
 # defects awaiting Armatura classification and is never a worker's department.

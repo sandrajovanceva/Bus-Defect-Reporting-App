@@ -45,12 +45,13 @@ TYPE_LABELS = {
     "other": "OTHER",
 }
 
-# Statuses mirror the physical workflow: a report comes in (newReport), goes
-# to the Арматура (fittings) department which determines the defect category
-# — electrical / mechanical / bravari (armaturaReview), gets assigned and
-# worked on (inProgress), is fixed and signed off (resolved), and finally
-# cleared at the main gate to rejoin traffic (returnedToService). A report
-# can be rejected at any point.
+# Statuses mirror the physical workflow. A report is filed unclassified and
+# goes straight to Арматура (armaturaReview) — that is the first step in the
+# real procedure, and nobody upstream decides the category. Арматура
+# determines electrical / mechanical / bravari, which routes it to that
+# department's queue (newReport). A worker there picks it up (inProgress),
+# fixes and signs it off (resolved), and the main gate clears the bus back
+# into traffic (returnedToService). A report can be rejected at any point.
 STATUS_LABELS = {
     "newReport": "NEW",
     "armaturaReview": "AT ARMATURA",
@@ -61,13 +62,16 @@ STATUS_LABELS = {
     "rejected": "REJECTED",
 }
 
-# A defect sits in its department's queue while it is classified but nobody has
-# picked it up yet, so those are the statuses a service worker can claim from.
-CLAIMABLE_STATUSES = {"newReport", "armaturaReview"}
+# Only a classified defect can be claimed: while it is still at Арматура
+# nobody knows which department it belongs to, so there is no queue to take
+# it from.
+CLAIMABLE_STATUSES = {"newReport"}
 
 # Statuses a service worker may set on a job assigned to them. Returning a bus
 # to service and rejecting a report stay with the dispatcher.
 SERVICE_STATUSES = {"inProgress", "onHold", "resolved"}
+
+VALID_PRIORITIES = {"low", "medium", "high"}
 
 
 def _bus_id_for(session, number: str) -> str | None:
@@ -82,6 +86,10 @@ def _new_id() -> str:
 def _can_view(current: User, defect: Defect) -> bool:
     if current.role == "dispatcher":
         return True
+    if current.role == "armatura":
+        # Арматура needs the whole board: what is waiting to be classified,
+        # and what it has already sent on.
+        return True
     if current.role == "service":
         return defect.department == current.department
     return defect.submitted_by_id == current.id
@@ -89,8 +97,10 @@ def _can_view(current: User, defect: Defect) -> bool:
 
 def _visible_query(current: User):
     stmt = select(Defect)
-    if current.role == "dispatcher":
-        pass  # dispatchers see the whole fleet
+    if current.role in ("dispatcher", "armatura"):
+        # Dispatchers see the whole fleet; Арматура needs the same board to
+        # work its queue and follow what it has routed onward.
+        pass
     elif current.role == "service":
         # Service workers only ever see their own department's defects.
         stmt = stmt.where(Defect.department == current.department)
@@ -113,8 +123,6 @@ def create_defect(
     current: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    if body.type not in DEPARTMENT_BY_TYPE:
-        raise HTTPException(status_code=422, detail="Unknown defect type")
     if not body.driver_name.strip():
         raise HTTPException(status_code=422, detail="Driver name is required")
 
@@ -127,21 +135,27 @@ def create_defect(
         id=_new_id(),
         bus_number=bus.number,
         bus_id=bus.id,
-        type=body.type,
-        priority=body.priority,
-        status="newReport",
+        # Whoever files the report does not decide the category: it goes in
+        # unclassified and Арматура determines it.
+        type="unclassified",
+        # A placeholder until Арматура judges it; nothing acts on priority
+        # while the report is still unclassified.
+        priority="medium",
+        status="armaturaReview",
         description=body.description.strip(),
-        department=DEPARTMENT_BY_TYPE[body.type],
+        department="unassigned",
         submitted_by_id=current.id,
         submitted_by_name=current.full_name,
         driver_name=body.driver_name.strip(),
         image_base64=body.image_base64,
+        address=(body.address or "").strip() or None,
         latitude=body.latitude,
         longitude=body.longitude,
         history=[
             {
                 "type": "created",
-                "description": "Report submitted.",
+                "meta": {"event": "submitted"},
+                "description": "Report submitted; sent to Арматура.",
                 "changed_by_name": current.full_name,
                 "changed_at": now.isoformat(),
             }
@@ -172,7 +186,8 @@ def seed_defects(
         history = [
             {
                 "type": "created",
-                "description": "Report submitted.",
+                "meta": {"event": "submitted"},
+                "description": "Report submitted; sent to Арматура.",
                 "changed_by_name": current.full_name,
                 "changed_at": created_at.isoformat(),
             }
@@ -181,6 +196,7 @@ def seed_defects(
             history.append(
                 {
                     "type": "statusChange",
+                    "meta": {"from": "newReport", "to": sample["status"]},
                     "description": (
                         f"Status changed: NEW -> {STATUS_LABELS[sample['status']]}."
                     ),
@@ -266,6 +282,7 @@ def update_status(
     history.append(
         {
             "type": "statusChange",
+            "meta": {"from": previous, "to": body.status},
             "description": (
                 f"Status changed: {STATUS_LABELS.get(previous, previous)} -> "
                 f"{STATUS_LABELS[body.status]}."
@@ -278,6 +295,7 @@ def update_status(
         history.append(
             {
                 "type": "note",
+                "meta": {"event": "note"},
                 "description": body.note.strip(),
                 "changed_by_name": current.full_name,
                 "changed_at": now.isoformat(),
@@ -329,6 +347,7 @@ def claim_defect(
     history.append(
         {
             "type": "assignment",
+            "meta": {"event": "claimed", "worker": current.full_name},
             "description": f"Claimed by {current.full_name}; work started.",
             "changed_by_name": current.full_name,
             "changed_at": now.isoformat(),
@@ -364,12 +383,19 @@ def release_defect(
     previous_name = defect.assigned_to_name
     defect.assigned_to_id = None
     defect.assigned_to_name = None
-    defect.status = "armaturaReview"
+    # Back to its own department's queue. It has already been classified, so
+    # it must not travel back to Арматура.
+    defect.status = "newReport"
     defect.updated_at = now
     history = list(defect.history or [])
     history.append(
         {
             "type": "assignment",
+            "meta": {
+                "event": "released",
+                "worker": previous_name,
+                "department": defect.department,
+            },
             "description": (
                 f"Released by {previous_name} back to the "
                 f"{defect.department} queue."
@@ -392,12 +418,17 @@ def reclassify_defect(
     current: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    """Armatura-department classification: pins down the actual defect
-    category (and therefore which department it's routed to), which may
-    differ from whatever the reporter guessed when filing the report."""
-    if current.role != "dispatcher":
+    """Арматура's classification: determines the real defect category and
+    therefore which department the report is routed to.
+
+    This is the first step of the physical procedure, so it belongs to the
+    Арматура department. A dispatcher keeps access as the system's
+    administrator, to correct a misclassification after the fact.
+    """
+    if current.role not in ("armatura", "dispatcher"):
         raise HTTPException(
-            status_code=403, detail="Only dispatchers can classify a defect"
+            status_code=403,
+            detail="Only Арматура can classify a defect",
         )
     if body.type not in DEPARTMENT_BY_TYPE:
         raise HTTPException(status_code=422, detail="Unknown defect type")
@@ -405,23 +436,47 @@ def reclassify_defect(
         raise HTTPException(
             status_code=422, detail="Pick an actual category, not unclassified"
         )
+    if body.priority is not None and body.priority not in VALID_PRIORITIES:
+        raise HTTPException(
+            status_code=422,
+            detail="Priority must be one of: " + ", ".join(sorted(VALID_PRIORITIES)),
+        )
 
     defect = session.get(Defect, defect_id)
     if not defect:
         raise HTTPException(status_code=404, detail="Defect not found")
 
     previous_type = defect.type
+    previous_priority = defect.priority
     now = datetime.utcnow()
     defect.type = body.type
+    if body.priority is not None:
+        defect.priority = body.priority
     defect.department = DEPARTMENT_BY_TYPE[body.type]
+    # Classifying is what puts the report into a department queue, so an
+    # unclaimed report waiting at Арматура becomes claimable here.
+    if defect.status == "armaturaReview":
+        defect.status = "newReport"
     defect.updated_at = now
     history = list(defect.history or [])
     history.append(
         {
             "type": "departmentChange",
+            "meta": {
+                "from_type": previous_type,
+                "to_type": body.type,
+                "department": defect.department,
+                "from_priority": previous_priority,
+                "to_priority": defect.priority,
+            },
             "description": (
                 f"Classified by Armatura: {TYPE_LABELS.get(previous_type, previous_type)} "
                 f"-> {TYPE_LABELS[body.type]} ({defect.department})."
+                + (
+                    f" Priority {previous_priority} -> {defect.priority}."
+                    if defect.priority != previous_priority
+                    else ""
+                )
             ),
             "changed_by_name": current.full_name,
             "changed_at": now.isoformat(),

@@ -1,9 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 
 import { DefectTable } from '../components/DefectTable'
-import { ErrorState, LoadingState, Panel } from '../components/ui'
+import { NewDefectDialog } from '../components/NewDefectDialog'
+import { Button, ErrorState, LoadingState, Panel } from '../components/ui'
+import { useAuth } from '../auth/AuthContext'
 import { useDefects } from '../hooks/queries'
 import { statusLabel } from '../lib/domain'
 import { DEFECT_STATUSES, type DefectStatus } from '../types'
@@ -12,7 +14,9 @@ type StatusFilter = DefectStatus | 'all'
 
 export function Defects() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const { data, isPending, error } = useDefects()
+  const [isReporting, setIsReporting] = useState(false)
 
   // Both filters live in the URL rather than in local state, so a filtered
   // view survives a reload and can be linked to a colleague.
@@ -64,8 +68,10 @@ export function Defects() {
   }, [all, search, status])
 
   return (
-    <div className="p-7">
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+    // The page is exactly viewport-height, so the table scrolls inside its
+    // panel and the filter row stays put.
+    <div className="flex h-full flex-col p-7">
+      <div className="mb-6 flex shrink-0 flex-wrap items-center gap-3">
         <input
           type="search"
           value={search}
@@ -90,9 +96,14 @@ export function Defects() {
         <p className="ml-auto text-[13px] text-ink-3">
           {t('resultCount', { count: filtered.length, total: all.length })}
         </p>
+        {user?.role === 'dispatcher' ? (
+          <Button onClick={() => setIsReporting(true)}>
+            {t('newDefectButton')}
+          </Button>
+        ) : null}
       </div>
 
-      <Panel className="overflow-hidden">
+      <Panel className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {isPending ? (
           <LoadingState />
         ) : error ? (
@@ -107,6 +118,8 @@ export function Defects() {
           />
         )}
       </Panel>
+
+      <NewDefectDialog open={isReporting} onOpenChange={setIsReporting} />
     </div>
   )
 }

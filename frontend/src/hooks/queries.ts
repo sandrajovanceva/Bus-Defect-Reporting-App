@@ -9,8 +9,10 @@ import type {
   BusCreateBody,
   BusUpdateBody,
   CreateUserBody,
+  DefectCreateBody,
   DefectStatus,
   DefectType,
+  Priority,
   UpdateUserBody,
 } from '../types'
 
@@ -55,6 +57,10 @@ function useDefectMutation<TArgs>(mutationFn: (args: TArgs) => Promise<unknown>)
   })
 }
 
+export function useCreateDefect() {
+  return useDefectMutation((body: DefectCreateBody) => api.createDefect(body))
+}
+
 export function useClaimDefect() {
   return useDefectMutation((id: string) => api.claimDefect(id))
 }
@@ -71,8 +77,9 @@ export function useUpdateStatus() {
 }
 
 export function useReclassify() {
-  return useDefectMutation((args: { id: string; type: DefectType }) =>
-    api.reclassifyDefect(args.id, args.type),
+  return useDefectMutation(
+    (args: { id: string; type: DefectType; priority?: Priority }) =>
+      api.reclassifyDefect(args.id, args.type, args.priority),
   )
 }
 

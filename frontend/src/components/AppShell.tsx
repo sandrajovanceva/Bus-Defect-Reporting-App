@@ -3,6 +3,7 @@ import clsx from 'clsx'
 import {
   Bus,
   ClipboardList,
+  SlidersHorizontal,
   LayoutGrid,
   LogOut,
   Users,
@@ -36,12 +37,18 @@ const NAV: NavItem[] = [
     icon: LayoutGrid,
     roles: ['dispatcher'],
   },
+  {
+    to: '/armatura',
+    labelKey: 'navArmatura',
+    icon: SlidersHorizontal,
+    roles: ['armatura'],
+  },
   { to: '/queue', labelKey: 'navQueue', icon: Wrench, roles: ['service'] },
   {
     to: '/defects',
     labelKey: 'navDefects',
     icon: ClipboardList,
-    roles: ['dispatcher', 'service', 'driver'],
+    roles: ['dispatcher', 'service', 'driver', 'armatura'],
   },
   { to: '/fleet', labelKey: 'navFleet', icon: Bus, roles: ['dispatcher'] },
   { to: '/staff', labelKey: 'navStaff', icon: Users, roles: ['dispatcher'] },

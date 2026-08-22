@@ -46,6 +46,7 @@ const ROLE_KEYS: Record<UserRole, string> = {
   driver: 'roleDriver',
   dispatcher: 'roleDispatcher',
   service: 'roleService',
+  armatura: 'roleArmatura',
 }
 
 const CATEGORY_KEYS: Record<BusCategory, string> = {
@@ -126,6 +127,76 @@ export const SERVICE_STATUSES: DefectStatus[] = [
 
 export function isClaimable(defect: Defect): boolean {
   return !defect.assigned_to_id && CLAIMABLE_STATUSES.includes(defect.status)
+}
+
+/**
+ * Renders a history entry in the reader's language.
+ *
+ * The backend writes structured facts alongside an English sentence; the
+ * sentence is only a fallback for entries recorded before `meta` existed,
+ * because text baked into the database can never follow a language switch.
+ */
+export function historyText(
+  t: TFunction,
+  entry: { type: string; description: string; meta?: Record<string, unknown> | null },
+): string {
+  const meta = entry.meta
+  if (!meta) return entry.description
+
+  const str = (key: string) =>
+    typeof meta[key] === 'string' ? (meta[key] as string) : undefined
+
+  switch (meta.event ?? entry.type) {
+    case 'submitted':
+      return t('histSubmitted')
+
+    // A note is the person's own words — nothing to translate.
+    case 'note':
+      return entry.description
+
+    case 'claimed':
+      return t('histClaimed', { worker: str('worker') ?? '' })
+
+    case 'released':
+      return t('histReleased', {
+        worker: str('worker') ?? '',
+        department: departmentLabel(t, (str('department') ?? 'general') as Department),
+      })
+
+    case 'statusChange': {
+      const from = str('from') as DefectStatus | undefined
+      const to = str('to') as DefectStatus | undefined
+      if (!from || !to) return entry.description
+      return t('histStatus', {
+        from: statusLabel(t, from),
+        to: statusLabel(t, to),
+      })
+    }
+
+    case 'departmentChange': {
+      const toType = str('to_type') as DefectType | undefined
+      if (!toType) return entry.description
+      const sentence = t('histClassified', {
+        type: typeLabel(t, toType),
+        department: departmentLabel(
+          t,
+          (str('department') ?? 'general') as Department,
+        ),
+      })
+      const fromPriority = str('from_priority') as Priority | undefined
+      const toPriority = str('to_priority') as Priority | undefined
+      if (fromPriority && toPriority && fromPriority !== toPriority) {
+        return `${sentence} ${t('histPriority', {
+          from: priorityLabel(t, fromPriority),
+          to: priorityLabel(t, toPriority),
+        })}`
+      }
+      return sentence
+    }
+
+    default:
+      return entry.description
+  }
 }
 
 export function formatDateTime(iso: string, locale: string): string {

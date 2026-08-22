@@ -5,10 +5,12 @@ import type {
   BusUpdateBody,
   CreateUserBody,
   Defect,
+  DefectCreateBody,
   DefectDetail,
   DefectStatus,
   DefectType,
   LoginResponse,
+  Priority,
   UpdateUserBody,
   User,
 } from '../types'
@@ -37,6 +39,13 @@ export async function fetchDefects() {
   return data
 }
 
+/** Files a new report. The bus number must exist in the fleet registry —
+ *  the API rejects anything else. */
+export async function createDefect(body: DefectCreateBody) {
+  const { data } = await api.post<DefectDetail>('/defects', body)
+  return data
+}
+
 export async function fetchDefect(id: string) {
   const { data } = await api.get<DefectDetail>(`/defects/${id}`)
   return data
@@ -56,8 +65,15 @@ export async function updateDefectStatus(
 
 /** Армaтура's classification: pins the real category, which also routes the
  *  defect to a department. */
-export async function reclassifyDefect(id: string, type: DefectType) {
-  const { data } = await api.patch<DefectDetail>(`/defects/${id}/type`, { type })
+export async function reclassifyDefect(
+  id: string,
+  type: DefectType,
+  priority?: Priority,
+) {
+  const { data } = await api.patch<DefectDetail>(`/defects/${id}/type`, {
+    type,
+    ...(priority ? { priority } : {}),
+  })
   return data
 }
 

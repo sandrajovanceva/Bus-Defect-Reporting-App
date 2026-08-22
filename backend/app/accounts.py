@@ -4,6 +4,7 @@ import logging
 import uuid
 
 from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from .config import settings
@@ -90,17 +91,27 @@ def create_user(
 
 
 def ensure_bootstrap_admin() -> None:
-    """Create the first dispatcher if the user table is empty."""
+    """Create the first dispatcher if the user table is empty.
+
+    A production server runs several workers and every one of them executes
+    startup, so the "is it empty" check and the insert race each other. The
+    unique index on email is what actually decides it; losing that race is
+    the normal outcome for all but one worker, not an error.
+    """
     with Session(engine) as session:
         if session.exec(select(User)).first() is not None:
             return
-        create_user(
-            session,
-            email=settings.bootstrap_admin_email,
-            password=settings.bootstrap_admin_password,
-            full_name=settings.bootstrap_admin_name,
-            role="dispatcher",
-        )
+        try:
+            create_user(
+                session,
+                email=settings.bootstrap_admin_email,
+                password=settings.bootstrap_admin_password,
+                full_name=settings.bootstrap_admin_name,
+                role="dispatcher",
+            )
+        except (IntegrityError, HTTPException):
+            session.rollback()
+            return
         logger.warning(
             "Bootstrapped first dispatcher '%s'. Change its password after "
             "first login.",

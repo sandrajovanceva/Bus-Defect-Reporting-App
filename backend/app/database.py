@@ -3,6 +3,7 @@
 import logging
 
 from sqlalchemy import inspect, text
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlmodel import Session, SQLModel, create_engine
 
 from .config import settings
@@ -68,20 +69,35 @@ def _add_missing_columns() -> None:
 
             # A column added to a table with rows must be nullable or carry a
             # default, so it is always added nullable regardless of the model.
-            with engine.begin() as connection:
-                connection.execute(
-                    text(
-                        f'ALTER TABLE "{table.name}" '
-                        f'ADD COLUMN "{column.name}" {column_type}'
+            try:
+                with engine.begin() as connection:
+                    connection.execute(
+                        text(
+                            f'ALTER TABLE "{table.name}" '
+                            f'ADD COLUMN "{column.name}" {column_type}'
+                        )
                     )
-                )
+            except (OperationalError, ProgrammingError):
+                # Another worker added it between the inspection and now.
+                continue
             logger.info("Added missing column %s.%s", table.name, column.name)
 
 
 def init_db() -> None:
+    """Create tables and bring existing ones up to date.
+
+    Every gunicorn worker runs this at startup, so each step races the
+    others: two workers can both see a table missing and both try to create
+    it. The loser gets "table already exists", which is the right outcome
+    rather than a failure — the schema it wanted is there either way.
+    """
     from . import models  # noqa: F401  (register tables before create_all)
 
-    SQLModel.metadata.create_all(engine)
+    try:
+        SQLModel.metadata.create_all(engine)
+    except (OperationalError, ProgrammingError):
+        pass
+
     _add_missing_columns()
 
 

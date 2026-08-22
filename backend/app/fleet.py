@@ -4,6 +4,7 @@ import logging
 import uuid
 
 from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from .database import engine
@@ -69,7 +70,12 @@ def seed_fleet() -> None:
                 existing.add(normalised)
                 added += 1
         if added:
-            session.commit()
+            try:
+                session.commit()
+            except IntegrityError:
+                # Another worker seeded first; its rows are identical.
+                session.rollback()
+                return
             logger.info("Seeded %s buses into the fleet registry.", added)
 
 

@@ -4,6 +4,10 @@
  * a payload can be compared against the backend without a translation step.
  */
 
+/** `armatura` is Приемна контрола (intake inspection). The wire value is
+ *  left over from a wrong name — Арматура is a separate JSP department —
+ *  and is kept because accounts and defects store it. The same goes for
+ *  the `armaturaReview` status. */
 export const USER_ROLES = [
   'driver',
   'dispatcher',
@@ -12,7 +16,7 @@ export const USER_ROLES = [
 ] as const
 export type UserRole = (typeof USER_ROLES)[number]
 
-/** `unassigned` is where a defect waits for Армaтура to classify it; it is
+/** `unassigned` is where a defect waits for intake inspection to classify it; it is
  *  never a worker's own department. */
 export const DEPARTMENTS = [
   'unassigned',
@@ -64,26 +68,28 @@ export const HISTORY_TYPES = [
 ] as const
 export type HistoryType = (typeof HISTORY_TYPES)[number]
 
-export const BUS_CATEGORIES = ['urban', 'regional', 'night'] as const
-export type BusCategory = (typeof BUS_CATEGORIES)[number]
+/** The two JSP depots (автобази) a bus can be kept at. */
+export const DEPOTS = ['avtokomanda', 'gjorche_petrov'] as const
+export type Depot = (typeof DEPOTS)[number]
 
 export interface Bus {
   id: string
+  /** Garage number (гаражен број) — the vehicle, not the line it runs. */
   number: string
-  category: BusCategory
+  depot: Depot | null
   is_active: boolean
   notes: string | null
 }
 
 export interface BusCreateBody {
   number: string
-  category: BusCategory
+  depot: Depot
   notes?: string | null
 }
 
 export interface BusUpdateBody {
   number?: string
-  category?: BusCategory
+  depot?: Depot
   is_active?: boolean
   notes?: string | null
 }

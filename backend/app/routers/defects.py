@@ -46,15 +46,15 @@ TYPE_LABELS = {
 }
 
 # Statuses mirror the physical workflow. A report is filed unclassified and
-# goes straight to Арматура (armaturaReview) — that is the first step in the
-# real procedure, and nobody upstream decides the category. Арматура
+# goes straight to intake inspection (armaturaReview) — that is the first step in the
+# real procedure, and nobody upstream decides the category. Intake inspection
 # determines electrical / mechanical / bravari, which routes it to that
 # department's queue (newReport). A worker there picks it up (inProgress),
 # fixes and signs it off (resolved), and the main gate clears the bus back
 # into traffic (returnedToService). A report can be rejected at any point.
 STATUS_LABELS = {
     "newReport": "NEW",
-    "armaturaReview": "AT ARMATURA",
+    "armaturaReview": "AT INTAKE INSPECTION",
     "inProgress": "IN PROGRESS",
     "onHold": "ON HOLD",
     "resolved": "RESOLVED",
@@ -62,7 +62,7 @@ STATUS_LABELS = {
     "rejected": "REJECTED",
 }
 
-# Only a classified defect can be claimed: while it is still at Арматура
+# Only a classified defect can be claimed: while it is still at intake inspection
 # nobody knows which department it belongs to, so there is no queue to take
 # it from.
 CLAIMABLE_STATUSES = {"newReport"}
@@ -87,7 +87,7 @@ def _can_view(current: User, defect: Defect) -> bool:
     if current.role == "dispatcher":
         return True
     if current.role == "armatura":
-        # Арматура needs the whole board: what is waiting to be classified,
+        # Intake inspection needs the whole board: what is waiting to be classified,
         # and what it has already sent on.
         return True
     if current.role == "service":
@@ -98,7 +98,7 @@ def _can_view(current: User, defect: Defect) -> bool:
 def _visible_query(current: User):
     stmt = select(Defect)
     if current.role in ("dispatcher", "armatura"):
-        # Dispatchers see the whole fleet; Арматура needs the same board to
+        # Dispatchers see the whole fleet; intake inspection needs the same board to
         # work its queue and follow what it has routed onward.
         pass
     elif current.role == "service":
@@ -136,9 +136,9 @@ def create_defect(
         bus_number=bus.number,
         bus_id=bus.id,
         # Whoever files the report does not decide the category: it goes in
-        # unclassified and Арматура determines it.
+        # unclassified and intake inspection determines it.
         type="unclassified",
-        # A placeholder until Арматура judges it; nothing acts on priority
+        # A placeholder until intake inspection judges it; nothing acts on priority
         # while the report is still unclassified.
         priority="medium",
         status="armaturaReview",
@@ -155,7 +155,7 @@ def create_defect(
             {
                 "type": "created",
                 "meta": {"event": "submitted"},
-                "description": "Report submitted; sent to Арматура.",
+                "description": "Report submitted; sent to intake inspection.",
                 "changed_by_name": current.full_name,
                 "changed_at": now.isoformat(),
             }
@@ -187,7 +187,7 @@ def seed_defects(
             {
                 "type": "created",
                 "meta": {"event": "submitted"},
-                "description": "Report submitted; sent to Арматура.",
+                "description": "Report submitted; sent to intake inspection.",
                 "changed_by_name": current.full_name,
                 "changed_at": created_at.isoformat(),
             }
@@ -384,7 +384,7 @@ def release_defect(
     defect.assigned_to_id = None
     defect.assigned_to_name = None
     # Back to its own department's queue. It has already been classified, so
-    # it must not travel back to Арматура.
+    # it must not travel back to intake inspection.
     defect.status = "newReport"
     defect.updated_at = now
     history = list(defect.history or [])
@@ -418,17 +418,17 @@ def reclassify_defect(
     current: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    """Арматура's classification: determines the real defect category and
+    """Intake inspection's classification: determines the real defect category and
     therefore which department the report is routed to.
 
     This is the first step of the physical procedure, so it belongs to the
-    Арматура department. A dispatcher keeps access as the system's
+    intake inspection (Приемна контрола). A dispatcher keeps access as the system's
     administrator, to correct a misclassification after the fact.
     """
     if current.role not in ("armatura", "dispatcher"):
         raise HTTPException(
             status_code=403,
-            detail="Only Арматура can classify a defect",
+            detail="Only intake inspection can classify a defect",
         )
     if body.type not in DEPARTMENT_BY_TYPE:
         raise HTTPException(status_code=422, detail="Unknown defect type")
@@ -454,7 +454,7 @@ def reclassify_defect(
         defect.priority = body.priority
     defect.department = DEPARTMENT_BY_TYPE[body.type]
     # Classifying is what puts the report into a department queue, so an
-    # unclaimed report waiting at Арматура becomes claimable here.
+    # unclaimed report waiting at intake inspection becomes claimable here.
     if defect.status == "armaturaReview":
         defect.status = "newReport"
     defect.updated_at = now
@@ -470,7 +470,7 @@ def reclassify_defect(
                 "to_priority": defect.priority,
             },
             "description": (
-                f"Classified by Armatura: {TYPE_LABELS.get(previous_type, previous_type)} "
+                f"Classified at intake inspection: {TYPE_LABELS.get(previous_type, previous_type)} "
                 f"-> {TYPE_LABELS[body.type]} ({defect.department})."
                 + (
                     f" Priority {previous_priority} -> {defect.priority}."

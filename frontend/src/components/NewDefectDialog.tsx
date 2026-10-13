@@ -1,26 +1,32 @@
 import * as Dialog from '@radix-ui/react-dialog'
+import { Bus as BusIcon, UserRound } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ApiError, toApiError } from '../api/client'
 import { useBuses, useCreateDefect, useUsers } from '../hooks/queries'
-import { Button, ErrorState, Field, Select } from './ui'
+import { depotLabel } from '../lib/domain'
+import { DEPOTS, type Depot } from '../types'
+import { Combobox } from './Combobox'
+import { Button, ErrorState, Field, SegmentedControl } from './ui'
 
 /**
  * Filing a report from the desk.
  *
  * Drivers report from the phone app; this is for a dispatcher taking the
  * report over the radio or at the counter, which is how most of them arrive.
- * The bus comes from the fleet registry and the driver from the staff list —
- * neither is free text, so a report cannot name a bus or a person that does
- * not exist.
+ * The depot is picked first, which narrows the bus field to that depot's
+ * garage numbers; the bus is then typed or picked, and only a registered
+ * number is accepted. The driver is typed too, with the staff list as
+ * suggestions — not every driver has an account, and a name heard over the
+ * radio still has to be recordable.
  *
  * Location is typed as an address rather than coordinates: a dispatcher is
  * hearing "Партизанска, кај депото" over the radio, not a GPS fix. The
  * driver's app still records real coordinates.
  *
  * There is no defect-type or priority field. In the real procedure both are
- * determined by Арматура once the bus reaches the depot, so a report is
+ * determined by intake inspection once the bus reaches the depot, so a report is
  * filed unclassified and routed straight there.
  */
 export function NewDefectDialog({
@@ -41,13 +47,28 @@ export function NewDefectDialog({
     [users],
   )
 
+  const [depot, setDepot] = useState<Depot | null>(null)
   const [busNumber, setBusNumber] = useState('')
   const [driverName, setDriverName] = useState('')
   const [description, setDescription] = useState('')
   const [address, setAddress] = useState('')
   const [error, setError] = useState<string | null>(null)
 
+  const busOptions = useMemo(
+    () =>
+      (buses ?? [])
+        .filter((bus) => bus.depot === depot)
+        .map((bus) => ({ value: bus.number, label: bus.number })),
+    [buses, depot],
+  )
+
+  const driverOptions = useMemo(
+    () => drivers.map((d) => ({ value: d.full_name, label: d.full_name })),
+    [drivers],
+  )
+
   function reset() {
+    setDepot(null)
     setBusNumber('')
     setDriverName('')
     setDescription('')
@@ -60,7 +81,7 @@ export function NewDefectDialog({
     setError(null)
 
     if (!busNumber) return setError(t('validationBusPick'))
-    if (!driverName) return setError(t('validationDriverPick'))
+    if (!driverName.trim()) return setError(t('validationDriverPick'))
     if (description.trim().length < 10) {
       return setError(t('validationDescriptionShort'))
     }
@@ -68,7 +89,7 @@ export function NewDefectDialog({
     try {
       await create.mutateAsync({
         bus_number: busNumber,
-        driver_name: driverName,
+        driver_name: driverName.trim(),
         description: description.trim(),
         address: address.trim() || null,
       })
@@ -93,40 +114,53 @@ export function NewDefectDialog({
     >
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-ink/25 backdrop-blur-sm" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 max-h-[88vh] w-full max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-surface p-7 shadow-[var(--shadow-raised)]">
+        <Dialog.Content className="fixed top-1/2 left-1/2 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-surface p-5 shadow-[var(--shadow-raised)] sm:p-7">
           <Dialog.Title className="text-[19px] font-semibold tracking-tight text-ink">
             {t('newDefectTitle')}
           </Dialog.Title>
 
           <form onSubmit={onSubmit} className="mt-5 space-y-4">
+            <div>
+              <span className="field-label mb-1.5 block">
+                {t('fleetDepot')}
+              </span>
+              <SegmentedControl
+                options={DEPOTS.map((value) => ({
+                  value,
+                  label: depotLabel(t, value),
+                }))}
+                value={depot}
+                onChange={(next) => {
+                  setDepot(next)
+                  // A garage number belongs to one depot only.
+                  setBusNumber('')
+                }}
+              />
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
-              <Select
+              <Combobox
                 label={t('labelBus')}
                 value={busNumber}
-                onChange={(event) => setBusNumber(event.target.value)}
-              >
-                <option value="">—</option>
-                {(buses ?? []).map((bus) => (
-                  <option key={bus.id} value={bus.number}>
-                    {bus.number}
-                  </option>
-                ))}
-              </Select>
+                onChange={setBusNumber}
+                options={busOptions}
+                disabled={!depot}
+                inputMode="numeric"
+                placeholder={depot ? t('busSearchHint') : t('busPickDepotFirst')}
+                emptyText={t('busNoMatch')}
+                leading={<BusIcon size={16} strokeWidth={1.9} />}
+              />
 
-              <Select
+              <Combobox
                 label={t('labelDriver')}
                 value={driverName}
-                onChange={(event) => setDriverName(event.target.value)}
-              >
-                <option value="">—</option>
-                {drivers.map((driver) => (
-                  <option key={driver.id} value={driver.full_name}>
-                    {driver.full_name}
-                  </option>
-                ))}
-              </Select>
-
-
+                onChange={setDriverName}
+                options={driverOptions}
+                allowCustom
+                placeholder={t('driverSearchHint')}
+                emptyText={t('driverNoMatch')}
+                leading={<UserRound size={16} strokeWidth={1.9} />}
+              />
             </div>
 
             <label className="block">

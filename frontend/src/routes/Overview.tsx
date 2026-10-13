@@ -9,6 +9,7 @@ import {
   departmentLabel,
   formatDateTime,
   historyText,
+  parseApiDate,
   typeLabel,
 } from '../lib/domain'
 import { WORKER_DEPARTMENTS, type Defect } from '../types'
@@ -19,7 +20,7 @@ const CLOSED = new Set(['resolved', 'returnedToService', 'rejected'])
 const DAY = 24 * 60 * 60 * 1000
 
 function ageInDays(iso: string): number {
-  return Math.floor((Date.now() - new Date(iso).getTime()) / DAY)
+  return Math.floor((Date.now() - parseApiDate(iso).getTime()) / DAY)
 }
 
 /**
@@ -109,7 +110,7 @@ export function Overview() {
   if (isPending) return <LoadingState />
   if (error) {
     return (
-      <div className="p-7">
+      <div className="p-4 sm:p-7">
         <ErrorState message={error.message} />
       </div>
     )
@@ -118,7 +119,7 @@ export function Overview() {
   const oldestDays = stats.oldest ? ageInDays(stats.oldest.created_at) : 0
 
   return (
-    <div className="space-y-6 p-7">
+    <div className="space-y-6 p-4 sm:p-7">
       {/* --- the four numbers a dispatcher acts on ------------------------- */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)]">
         <AvailabilityCard
@@ -322,12 +323,18 @@ function MetricCard({
         : 'text-ink'
 
   return (
-    <Panel className="p-5 text-left transition-shadow hover:shadow-[var(--shadow-raised)]">
-      <button type="button" onClick={onClick} className="w-full text-left">
+    <Panel className="px-4 py-3.5 text-left transition-shadow hover:shadow-[var(--shadow-raised)] sm:p-5">
+      {/* On a phone the three cards stack, so each becomes one line —
+          label left, figure right — instead of a tall tile. */}
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex w-full items-center justify-between gap-3 text-left sm:block"
+      >
         <p className="text-[13px] font-medium text-ink-2">{label}</p>
         <p
           className={clsx(
-            'tabular mt-2 text-[30px] leading-none font-semibold tracking-tight',
+            'tabular text-[24px] leading-none font-semibold tracking-tight sm:mt-2 sm:text-[30px]',
             valueTone,
           )}
         >

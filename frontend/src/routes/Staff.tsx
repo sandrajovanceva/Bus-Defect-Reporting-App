@@ -10,6 +10,7 @@ import {
   LoadingState,
   PasswordField,
   Panel,
+  Select,
 } from '../components/ui'
 import {
   useCreateUser,
@@ -35,7 +36,7 @@ export function Staff() {
   const [isCreating, setIsCreating] = useState(false)
 
   return (
-    <div className="flex h-full flex-col p-7">
+    <div className="flex flex-col p-4 sm:p-7 lg:h-full">
       <div className="mb-6 flex shrink-0 items-center gap-4">
         <p className="text-[13px] text-ink-3">{t('staffTitle')}</p>
         <Button className="ml-auto" onClick={() => setIsCreating(true)}>
@@ -55,7 +56,55 @@ export function Staff() {
             {t('staffEmpty')}
           </p>
         ) : (
-          <div className="min-h-0 flex-1 overflow-auto">
+          <>
+          {/* A phone gets one card per person; the table needs a wide screen. */}
+          <ul className="divide-y divide-hairline md:hidden">
+            {data.map((account) => (
+              <li key={account.id} className="px-4 py-3.5">
+                <p className="text-[15px] font-semibold text-ink">
+                  {account.full_name}
+                  {!account.is_active ? (
+                    <span className="ml-2 text-[12px] font-medium text-accent">
+                      {t('staffInactive')}
+                    </span>
+                  ) : null}
+                </p>
+                <p className="mt-0.5 truncate font-mono text-[12px] text-ink-3">
+                  {account.email}
+                </p>
+                <p className="mt-1 text-[13px] text-ink-2">
+                  {roleLabel(t, account.role)}
+                  {account.department
+                    ? ` · ${departmentLabel(t, account.department)}`
+                    : ''}
+                </p>
+                <div className="mt-2 flex justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() =>
+                      update.mutate({
+                        id: account.id,
+                        body: { is_active: !account.is_active },
+                      })
+                    }
+                  >
+                    {account.is_active
+                      ? t('staffDeactivate')
+                      : t('staffActivate')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => remove.mutate(account.id)}
+                  >
+                    {t('staffDelete')}
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden min-h-0 flex-1 overflow-auto md:block">
           <table className="w-full border-collapse text-sm">
             <thead className="sticky top-0 z-10 bg-surface">
               <tr className="border-b border-hairline">
@@ -128,6 +177,7 @@ export function Staff() {
             </tbody>
           </table>
           </div>
+          </>
         )}
       </Panel>
 
@@ -188,7 +238,7 @@ function CreateUserDialog({
         <Dialog.Overlay className="fixed inset-0 bg-ink/25 backdrop-blur-sm" />
         {/* Opaque: a dialog is a surface in front of the page, not a tint
             over it. */}
-        <Dialog.Content className="fixed top-1/2 left-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-surface p-7 shadow-[var(--shadow-raised)]">
+        <Dialog.Content className="fixed top-1/2 left-1/2 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-surface p-5 shadow-[var(--shadow-raised)] sm:p-7">
           <Dialog.Title className="text-[19px] font-semibold tracking-tight text-ink">
             {t('staffCreateTitle')}
           </Dialog.Title>
@@ -219,40 +269,32 @@ function CreateUserDialog({
               onChange={(event) => setPassword(event.target.value)}
             />
 
-            <label className="block">
-              <span className="field-label mb-1.5 block">{t('fieldRole')}</span>
-              <select
-                value={role}
-                onChange={(event) => setRole(event.target.value as UserRole)}
-                className="w-full rounded-md bg-black/[0.04] px-3 py-2.5 text-sm text-ink focus:bg-surface focus:ring-2 focus:ring-accent/30 focus:outline-none"
-              >
-                {USER_ROLES.map((value) => (
-                  <option key={value} value={value}>
-                    {roleLabel(t, value)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <Select
+              label={t('fieldRole')}
+              value={role}
+              onChange={(event) => setRole(event.target.value as UserRole)}
+            >
+              {USER_ROLES.map((value) => (
+                <option key={value} value={value}>
+                  {roleLabel(t, value)}
+                </option>
+              ))}
+            </Select>
 
             {role === 'service' ? (
-              <label className="block">
-                <span className="field-label mb-1.5 block">
-                  {t('colDepartment')}
-                </span>
-                <select
-                  value={department}
-                  onChange={(event) =>
-                    setDepartment(event.target.value as Department)
-                  }
-                  className="w-full rounded-md bg-black/[0.04] px-3 py-2.5 text-sm text-ink focus:bg-surface focus:ring-2 focus:ring-accent/30 focus:outline-none"
-                >
-                  {WORKER_DEPARTMENTS.map((value) => (
-                    <option key={value} value={value}>
-                      {departmentLabel(t, value)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <Select
+                label={t('colDepartment')}
+                value={department}
+                onChange={(event) =>
+                  setDepartment(event.target.value as Department)
+                }
+              >
+                {WORKER_DEPARTMENTS.map((value) => (
+                  <option key={value} value={value}>
+                    {departmentLabel(t, value)}
+                  </option>
+                ))}
+              </Select>
             ) : null}
 
             {error ? <ErrorState message={error} /> : null}

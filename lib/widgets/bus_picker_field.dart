@@ -7,9 +7,9 @@ import '../services/bus_service.dart';
 
 /// Bus number picker, backed by the fleet registry.
 ///
-/// This replaces a free-text field. With ~100 buses a plain dropdown is a long
+/// This replaces a free-text field. With ~300 buses a plain dropdown is a long
 /// scroll on a phone, so this filters as you type: a driver types "22" and
-/// sees 22, 22А, 22П, 22Н. Only a number that exists can be submitted, which
+/// sees 1122, 1222, 2122 and the rest. Only a number that exists can be submitted, which
 /// is the whole point of the registry.
 class BusPickerField extends ConsumerWidget {
   const BusPickerField({
@@ -127,11 +127,13 @@ class BusPickerField extends ConsumerWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Text(
-                          _categoryLabel(t, bus.category),
-                          style: theme.textTheme.labelSmall,
-                        ),
+                        if (bus.depot != null) ...[
+                          const SizedBox(width: 10),
+                          Text(
+                            _depotLabel(t, bus.depot!),
+                            style: theme.textTheme.labelSmall,
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -143,14 +145,12 @@ class BusPickerField extends ConsumerWidget {
     );
   }
 
-  static String _categoryLabel(AppLocalizations t, BusCategory category) {
-    switch (category) {
-      case BusCategory.urban:
-        return t.categoryUrban;
-      case BusCategory.regional:
-        return t.categoryRegional;
-      case BusCategory.night:
-        return t.categoryNight;
+  static String _depotLabel(AppLocalizations t, BusDepot depot) {
+    switch (depot) {
+      case BusDepot.avtokomanda:
+        return t.depotAvtokomanda;
+      case BusDepot.gjorchePetrov:
+        return t.depotGjorchePetrov;
     }
   }
 }

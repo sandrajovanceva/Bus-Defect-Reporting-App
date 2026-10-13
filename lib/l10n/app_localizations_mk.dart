@@ -387,7 +387,7 @@ class AppLocalizationsMk extends AppLocalizations {
   String get statusNew => 'Нов';
 
   @override
-  String get statusArmaturaReview => 'На Арматура';
+  String get statusArmaturaReview => 'На приемна контрола';
 
   @override
   String get statusInProgress => 'Во тек';
@@ -402,11 +402,11 @@ class AppLocalizationsMk extends AppLocalizations {
   String get statusRejected => 'Одбиено';
 
   @override
-  String get sectionClassify => 'КЛАСИФИКАЦИЈА ОД АРМАТУРА';
+  String get sectionClassify => 'ПРИЕМНА КОНТРОЛА: КЛАСИФИКАЦИЈА';
 
   @override
   String get classifyHelperNote =>
-      'Арматура го прегледува пријавениот дефект и го утврдува вистинскиот тип — електрика, механика или бравари (каросерија) — со што се определува одделот каде се препраќа.';
+      'Приемната контрола го прегледува пријавениот дефект и го утврдува вистинскиот тип — електрика, механика или бравари (каросерија) — со што се определува одделот каде се препраќа.';
 
   @override
   String get classifySave => 'Потврди класификација';
@@ -644,7 +644,7 @@ class AppLocalizationsMk extends AppLocalizations {
   String get typeOther => 'Друго';
 
   @override
-  String get deptUnassigned => 'Чека преглед од Арматура';
+  String get deptUnassigned => 'Чека приемна контрола';
 
   @override
   String get deptElectrical => 'Електро оддел';
@@ -660,17 +660,14 @@ class AppLocalizationsMk extends AppLocalizations {
 
   @override
   String get reportPendingClassification =>
-      'Не треба да се избира категорија — Арматура ќе го прегледа описот и ќе го класифицира дефектот (електрика, механика, бравари/каросерија, итн.) штом пристигне пријавата.';
+      'Не треба да се избира категорија — приемната контрола ќе го прегледа описот и ќе го класифицира дефектот (електрика, механика, бравари/каросерија, итн.) штом пристигне пријавата.';
 
   @override
   String get busesLoadFailed => 'Списокот со автобуси не се вчита.';
 
   @override
-  String get categoryUrban => 'Градски';
+  String get depotAvtokomanda => 'Автокоманда';
 
   @override
-  String get categoryRegional => 'Меѓуградски';
-
-  @override
-  String get categoryNight => 'Ноќни';
+  String get depotGjorchePetrov => 'Ѓорче Петров';
 }

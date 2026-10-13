@@ -28,7 +28,7 @@ import {
 } from '../types'
 
 /**
- * The Арматура bench.
+ * The Приемна контрола (intake inspection) bench.
  *
  * First stop in the real procedure: every report arrives here unclassified,
  * and this department decides whether it is electrical, mechanical or
@@ -36,7 +36,7 @@ import {
  * upstream makes it, which is why the dispatcher's report form has no type
  * field.
  */
-export function Armatura() {
+export function Intake() {
   const { t, i18n } = useTranslation()
   const { data, isPending, error } = useDefects()
 
@@ -51,22 +51,22 @@ export function Armatura() {
   if (isPending) return <LoadingState />
   if (error) {
     return (
-      <div className="p-7">
+      <div className="p-4 sm:p-7">
         <ErrorState message={error.message} />
       </div>
     )
   }
 
   return (
-    <div className="p-7">
+    <div className="p-4 sm:p-7">
       <div className="mb-5">
-        <h2 className="section-title">{t('armaturaTitle')}</h2>
-        <p className="mt-1 text-[13px] text-ink-3">{t('armaturaHint')}</p>
+        <h2 className="section-title">{t('intakeTitle')}</h2>
+        <p className="mt-1 text-[13px] text-ink-3">{t('intakeHint')}</p>
       </div>
 
       {waiting.length === 0 ? (
         <Panel>
-          <EmptyState title={t('armaturaEmpty')} />
+          <EmptyState title={t('intakeEmpty')} />
         </Panel>
       ) : (
         <div className="space-y-3">
@@ -96,7 +96,7 @@ function ClassifyCard({
   const reclassify = useReclassify()
 
   const [type, setType] = useState<DefectType>('mechanical')
-  // Арматура judges urgency as well as category — both are set in the same
+  // Intake inspection judges urgency as well as category — both are set in the same
   // action, which is the one decision point in the real procedure.
   const [priority, setPriority] = useState<Priority>('medium')
   const routesTo = DEPARTMENT_BY_TYPE[type]
@@ -164,7 +164,7 @@ function ClassifyCard({
           isLoading={reclassify.isPending}
           onClick={() => reclassify.mutate({ id: defect.id, type, priority })}
         >
-          {t('armaturaClassify')}
+          {t('intakeClassify')}
         </Button>
       </div>
 

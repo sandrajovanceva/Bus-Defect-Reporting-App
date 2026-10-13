@@ -25,6 +25,7 @@ logger = logging.getLogger("uvicorn.error")
 STATUS_BY_LABEL = {
     "NEW": "newReport",
     "AT ARMATURA": "armaturaReview",
+    "AT INTAKE INSPECTION": "armaturaReview",
     "IN PROGRESS": "inProgress",
     "ON HOLD": "onHold",
     "RESOLVED": "resolved",
@@ -46,7 +47,7 @@ TYPE_BY_LABEL = {
 
 _STATUS = re.compile(r"^Status changed: (.+?) -> (.+?)\.$")
 _CLASSIFIED = re.compile(
-    r"^Classified by Armatura: (.+?) -> (.+?) \((\w+)\)\."
+    r"^Classified (?:by Armatura|at intake inspection): (.+?) -> (.+?) \((\w+)\)\."
     r"(?: Priority (\w+) -> (\w+)\.)?$"
 )
 _CLAIMED = re.compile(r"^Claimed by (.+?); work started\.$")

@@ -32,7 +32,7 @@ export function Queue() {
 
   if (!user?.department) {
     return (
-      <div className="p-7">
+      <div className="p-4 sm:p-7">
         <Panel className="p-10 text-center text-[15px] text-ink-2">
           {t('serviceNoDepartment')}
         </Panel>
@@ -43,7 +43,7 @@ export function Queue() {
   const rows = tab === 'queue' ? queue : mine
 
   return (
-    <div className="p-7">
+    <div className="p-4 sm:p-7">
       <div className="mb-6 flex flex-wrap items-center gap-4">
         <p className="text-[14px] text-ink-2">
           {t('labelDepartment')}:{' '}

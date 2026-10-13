@@ -63,7 +63,7 @@ export async function updateDefectStatus(
   return data
 }
 
-/** Армaтура's classification: pins the real category, which also routes the
+/** Intake inspection's classification: pins the real category, which also routes the
  *  defect to a department. */
 export async function reclassifyDefect(
   id: string,

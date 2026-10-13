@@ -1,8 +1,13 @@
+import * as RadixSelect from '@radix-ui/react-select'
 import clsx from 'clsx'
-import { useState } from 'react'
+import { Check, ChevronDown, ChevronUp } from 'lucide-react'
+import { Children, isValidElement, useState } from 'react'
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
+  OptgroupHTMLAttributes,
+  OptionHTMLAttributes,
+  ReactElement,
   ReactNode,
 } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -232,39 +237,214 @@ function EyeIcon({ isOff }: { isOff: boolean }) {
   )
 }
 
+/** Radix reserves "" for "nothing selected", so a real "" option (the "—"
+ *  placeholder) travels under this stand-in. */
+const EMPTY_VALUE = '__empty__'
+
+interface SelectOption {
+  value: string
+  label: ReactNode
+  disabled?: boolean
+}
+
+interface SelectSection {
+  label: string | null
+  options: SelectOption[]
+}
+
+/** Reads `<option>` / `<optgroup>` children in order, so callers write the
+ *  same markup a native select takes. */
+function readSections(children: ReactNode): SelectSection[] {
+  const sections: SelectSection[] = []
+  const toOption = (el: ReactElement<OptionHTMLAttributes<HTMLOptionElement>>) => ({
+    value: String(el.props.value ?? ''),
+    label: el.props.children,
+    disabled: el.props.disabled,
+  })
+
+  Children.forEach(children, (child) => {
+    if (!isValidElement(child)) return
+    if (child.type === 'option') {
+      const last = sections[sections.length - 1]
+      const option = toOption(child as ReactElement<OptionHTMLAttributes<HTMLOptionElement>>)
+      if (last && last.label === null) last.options.push(option)
+      else sections.push({ label: null, options: [option] })
+    } else if (child.type === 'optgroup') {
+      const group = child as ReactElement<OptgroupHTMLAttributes<HTMLOptGroupElement>>
+      const options: SelectOption[] = []
+      Children.forEach(group.props.children, (inner) => {
+        if (isValidElement(inner) && inner.type === 'option') {
+          options.push(
+            toOption(inner as ReactElement<OptionHTMLAttributes<HTMLOptionElement>>),
+          )
+        }
+      })
+      if (options.length) {
+        sections.push({ label: String(group.props.label ?? ''), options })
+      }
+    }
+  })
+  return sections
+}
+
+/**
+ * A dropdown in the system style: a soft field that opens a floating,
+ * rounded list with a check against the current choice — not the browser's
+ * native menu, which looks different on every OS and dated on most.
+ *
+ * Takes `<option>` / `<optgroup>` children and reports changes as
+ * `{ target: { value } }`, so it drops in where a native select was.
+ */
 export function Select({
   label,
   className,
   children,
-  ...rest
+  value,
+  onChange,
+  disabled,
 }: {
   label?: string
   className?: string
   children: ReactNode
-} & InputHTMLAttributes<HTMLSelectElement>) {
+  value: string
+  onChange?: (event: { target: { value: string } }) => void
+  disabled?: boolean
+}) {
+  const sections = readSections(children)
+  const toRadix = (v: string) => (v === '' ? EMPTY_VALUE : v)
+
   const select = (
-    <select
-      className={clsx(
-        INPUT_CLASSES,
-        'appearance-none bg-[length:16px] bg-[right_0.75rem_center] bg-no-repeat pr-9',
-        className,
-      )}
-      style={{
-        backgroundImage:
-          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238a8a91' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E\")",
-      }}
-      {...rest}
+    <RadixSelect.Root
+      value={toRadix(value)}
+      disabled={disabled}
+      onValueChange={(next) =>
+        onChange?.({ target: { value: next === EMPTY_VALUE ? '' : next } })
+      }
     >
-      {children}
-    </select>
+      <RadixSelect.Trigger
+        className={clsx(
+          INPUT_CLASSES,
+          'flex items-center justify-between gap-2 text-left',
+          'data-[state=open]:bg-surface data-[state=open]:ring-2 data-[state=open]:ring-accent/30',
+          'disabled:opacity-50',
+          className,
+        )}
+      >
+        <span className="min-w-0 truncate">
+          <RadixSelect.Value />
+        </span>
+        <RadixSelect.Icon className="shrink-0 text-ink-3">
+          <ChevronDown size={16} strokeWidth={2} />
+        </RadixSelect.Icon>
+      </RadixSelect.Trigger>
+
+      <RadixSelect.Portal>
+        <RadixSelect.Content
+          position="popper"
+          sideOffset={6}
+          className={clsx(
+            'z-50 max-h-[min(22rem,var(--radix-select-content-available-height))]',
+            'min-w-[var(--radix-select-trigger-width)] overflow-hidden',
+            'rounded-xl bg-surface/95 shadow-[var(--shadow-raised)] backdrop-blur-xl',
+            'ring-1 ring-black/[0.06]',
+            'origin-[var(--radix-select-content-transform-origin)] animate-[pop-in_140ms_ease-out]',
+          )}
+        >
+          <RadixSelect.ScrollUpButton className="flex h-6 items-center justify-center text-ink-3">
+            <ChevronUp size={14} />
+          </RadixSelect.ScrollUpButton>
+          <RadixSelect.Viewport className="p-1.5">
+            {sections.map((section, index) => (
+              <RadixSelect.Group key={section.label ?? `loose-${index}`}>
+                {index > 0 ? (
+                  <RadixSelect.Separator className="mx-2 my-1.5 h-px bg-hairline" />
+                ) : null}
+                {section.label ? (
+                  <RadixSelect.Label className="px-3 pt-1.5 pb-1 text-[12px] font-semibold text-ink-3">
+                    {section.label}
+                  </RadixSelect.Label>
+                ) : null}
+                {section.options.map((option) => (
+                  <RadixSelect.Item
+                    key={option.value}
+                    value={toRadix(option.value)}
+                    disabled={option.disabled}
+                    className={clsx(
+                      'relative flex cursor-default items-center rounded-md py-2 pr-3 pl-8',
+                      'text-[14px] text-ink outline-none select-none',
+                      'data-[highlighted]:bg-accent data-[highlighted]:text-white',
+                      'data-[disabled]:opacity-40',
+                    )}
+                  >
+                    <RadixSelect.ItemIndicator className="absolute left-2.5 inline-flex">
+                      <Check size={14} strokeWidth={2.5} />
+                    </RadixSelect.ItemIndicator>
+                    <RadixSelect.ItemText>{option.label}</RadixSelect.ItemText>
+                  </RadixSelect.Item>
+                ))}
+              </RadixSelect.Group>
+            ))}
+          </RadixSelect.Viewport>
+          <RadixSelect.ScrollDownButton className="flex h-6 items-center justify-center text-ink-3">
+            <ChevronDown size={14} />
+          </RadixSelect.ScrollDownButton>
+        </RadixSelect.Content>
+      </RadixSelect.Portal>
+    </RadixSelect.Root>
   )
 
   if (!label) return select
+  // A <div> rather than a <label>: the trigger is a button, and a wrapping
+  // label would re-open the list on any click inside it.
   return (
-    <label className="block">
+    <div className="block">
       <span className="field-label mb-1.5 block">{label}</span>
       {select}
-    </label>
+    </div>
+  )
+}
+
+/**
+ * Apple's segmented control: a few mutually exclusive choices side by side,
+ * the chosen one raised on a white pill. `value` may be null until the
+ * person picks, so nothing looks chosen by default.
+ */
+export function SegmentedControl<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string }[]
+  value: T | null
+  onChange: (value: T) => void
+}) {
+  return (
+    <div
+      role="radiogroup"
+      className="grid gap-1 rounded-[13px] bg-black/[0.05] p-1"
+      style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+    >
+      {options.map((option) => {
+        const isActive = option.value === value
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={isActive}
+            onClick={() => onChange(option.value)}
+            className={clsx(
+              'truncate rounded-[9px] px-3 py-2 text-[14px] font-medium transition-all duration-150',
+              isActive
+                ? 'bg-surface text-ink shadow-[0_1px_3px_rgb(0_0_0/0.12)]'
+                : 'text-ink-2 hover:text-ink',
+            )}
+          >
+            {option.label}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 

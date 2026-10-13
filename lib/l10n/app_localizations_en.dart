@@ -386,7 +386,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusNew => 'New';
 
   @override
-  String get statusArmaturaReview => 'At Armatura';
+  String get statusArmaturaReview => 'At intake inspection';
 
   @override
   String get statusInProgress => 'In Progress';
@@ -401,11 +401,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusRejected => 'Rejected';
 
   @override
-  String get sectionClassify => 'ARMATURA CLASSIFICATION';
+  String get sectionClassify => 'INTAKE INSPECTION: CLASSIFICATION';
 
   @override
   String get classifyHelperNote =>
-      'Armatura reviews the report and determines the actual defect category — electrical, mechanical or bravari (bodywork) — which sets the department it\'s routed to.';
+      'Intake inspection reviews the report and determines the actual defect category — electrical, mechanical or bravari (bodywork) — which sets the department it\'s routed to.';
 
   @override
   String get classifySave => 'Confirm classification';
@@ -643,7 +643,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get typeOther => 'Other';
 
   @override
-  String get deptUnassigned => 'Pending Armatura review';
+  String get deptUnassigned => 'Pending intake inspection';
 
   @override
   String get deptElectrical => 'Electrical department';
@@ -659,17 +659,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportPendingClassification =>
-      'No need to pick a category — Armatura will review the description and classify the defect (electrical, mechanical, bravari/bodywork, etc.) once the report comes in.';
+      'No need to pick a category — intake inspection will review the description and classify the defect (electrical, mechanical, bravari/bodywork, etc.) once the report comes in.';
 
   @override
   String get busesLoadFailed => 'Could not load the fleet list.';
 
   @override
-  String get categoryUrban => 'Urban';
+  String get depotAvtokomanda => 'Avtokomanda';
 
   @override
-  String get categoryRegional => 'Regional';
-
-  @override
-  String get categoryNight => 'Night';
+  String get depotGjorchePetrov => 'Gjorče Petrov';
 }

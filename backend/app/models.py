@@ -27,7 +27,7 @@ class User(SQLModel, table=True):
 
 
 class Bus(SQLModel, table=True):
-    """A bus in the JSP fleet, identified by the number it runs under.
+    """A bus in the JSP fleet, identified by its garage number.
 
     The registry exists so a defect can only ever be filed against a number
     that actually exists: free text produced "22", "22 " and "бус 22" as three
@@ -35,9 +35,11 @@ class Bus(SQLModel, table=True):
     """
 
     id: str = Field(primary_key=True)
+    # Garage number (гаражен број) — the vehicle itself, not the line it runs.
     number: str = Field(index=True, unique=True)
-    # "urban" | "regional" | "night", as JSP groups them.
-    category: str = "urban"
+    # "avtokomanda" | "gjorche_petrov": the depot the bus is kept at. Only
+    # null on rows from before depots existed, which startup removes.
+    depot: Optional[str] = Field(default=None, index=True)
     is_active: bool = True
     notes: Optional[str] = None
     created_at: datetime = Field(default_factory=utcnow)

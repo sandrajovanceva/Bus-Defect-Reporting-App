@@ -5,7 +5,7 @@ import 'maintenance_department.dart';
 
 enum DefectType {
   /// Not yet classified — the state every new report starts in until
-  /// Арматура reviews it and picks the real category.
+  /// Приемна контрола (intake inspection) reviews it and picks the real category.
   unclassified,
   electrical,
   mechanical,

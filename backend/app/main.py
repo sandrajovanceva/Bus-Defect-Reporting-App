@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .accounts import ensure_bootstrap_admin
 from .config import settings
 from .database import init_db
-from .fleet import link_existing_defects, seed_fleet
+from .fleet import remove_line_number_registry, seed_fleet
 from .history_backfill import backfill_history_meta
 from .routers import auth, buses, defects, users
 
@@ -20,8 +20,8 @@ logger = logging.getLogger("uvicorn.error")
 async def lifespan(app: FastAPI):
     init_db()
     ensure_bootstrap_admin()
+    remove_line_number_registry()
     seed_fleet()
-    link_existing_defects()
     backfill_history_meta()
     if settings.is_secret_insecure:
         logger.warning(

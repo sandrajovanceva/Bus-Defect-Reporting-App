@@ -4,10 +4,11 @@ import { Navigate, Route, Routes } from 'react-router'
 import { AppShell } from './components/AppShell'
 import { LoadingState } from './components/ui'
 import { useAuth } from './auth/AuthContext'
-import { Armatura } from './routes/Armatura'
+import { DailyReport } from './routes/DailyReport'
 import { DefectDetails } from './routes/DefectDetails'
 import { Defects } from './routes/Defects'
 import { Fleet } from './routes/Fleet'
+import { Intake } from './routes/Intake'
 import { Login } from './routes/Login'
 import { Overview } from './routes/Overview'
 import { Queue } from './routes/Queue'
@@ -18,7 +19,7 @@ import type { UserRole } from './types'
 const HOME_BY_ROLE: Record<UserRole, string> = {
   dispatcher: '/overview',
   service: '/queue',
-  armatura: '/armatura',
+  armatura: '/intake',
   driver: '/defects',
 }
 
@@ -58,10 +59,20 @@ export function App() {
           }
         />
         <Route
-          path="/armatura"
+          path="/intake"
           element={
             <RequireRole roles={['armatura']} fallback={home}>
-              <Armatura />
+              <Intake />
+            </RequireRole>
+          }
+        />
+        {/* The page's old address, before the role was renamed. */}
+        <Route path="/armatura" element={<Navigate to="/intake" replace />} />
+        <Route
+          path="/daily"
+          element={
+            <RequireRole roles={['dispatcher']} fallback={home}>
+              <DailyReport />
             </RequireRole>
           }
         />

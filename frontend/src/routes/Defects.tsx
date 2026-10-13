@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router'
 
 import { DefectTable } from '../components/DefectTable'
 import { NewDefectDialog } from '../components/NewDefectDialog'
-import { Button, ErrorState, LoadingState, Panel } from '../components/ui'
+import { Button, ErrorState, LoadingState, Panel, Select } from '../components/ui'
 import { useAuth } from '../auth/AuthContext'
 import { useDefects } from '../hooks/queries'
 import { statusLabel } from '../lib/domain'
@@ -70,20 +70,20 @@ export function Defects() {
   return (
     // The page is exactly viewport-height, so the table scrolls inside its
     // panel and the filter row stays put.
-    <div className="flex h-full flex-col p-7">
+    <div className="flex flex-col p-4 sm:p-7 lg:h-full">
       <div className="mb-6 flex shrink-0 flex-wrap items-center gap-3">
         <input
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder={t('searchPlaceholder')}
-          className="w-80 rounded-md bg-black/[0.05] px-3.5 py-2 text-[14px] text-ink placeholder:text-ink-3 focus:bg-surface focus:ring-2 focus:ring-accent/30 focus:outline-none"
+          className="w-full rounded-md sm:w-80 bg-black/[0.05] px-3.5 py-2 text-[14px] text-ink placeholder:text-ink-3 focus:bg-surface focus:ring-2 focus:ring-accent/30 focus:outline-none"
         />
 
-        <select
+        <Select
           value={status}
           onChange={(event) => setStatus(event.target.value as StatusFilter)}
-          className="rounded-md bg-black/[0.05] px-3.5 py-2 text-[14px] text-ink-2 focus:bg-surface focus:ring-2 focus:ring-accent/30 focus:outline-none"
+          className="py-2 text-[14px] sm:w-auto sm:min-w-52"
         >
           <option value="all">{t('filterAll')}</option>
           {DEFECT_STATUSES.map((value) => (
@@ -91,7 +91,7 @@ export function Defects() {
               {statusLabel(t, value)}
             </option>
           ))}
-        </select>
+        </Select>
 
         <p className="ml-auto text-[13px] text-ink-3">
           {t('resultCount', { count: filtered.length, total: all.length })}

@@ -19,10 +19,10 @@ import {
   useDeleteBus,
   useUpdateBus,
 } from '../hooks/queries'
-import { categoryLabel } from '../lib/domain'
-import { BUS_CATEGORIES, type Bus, type BusCategory } from '../types'
+import { depotLabel } from '../lib/domain'
+import { DEPOTS, type Bus, type Depot } from '../types'
 
-type CategoryFilter = BusCategory | 'all'
+type DepotFilter = Depot | 'all'
 
 /**
  * The fleet registry.
@@ -36,7 +36,8 @@ export function Fleet() {
   const navigate = useNavigate()
 
   const [showRetired, setShowRetired] = useState(false)
-  const [category, setCategory] = useState<CategoryFilter>('all')
+  const [depot, setDepot] = useState<DepotFilter>('all')
+  const [search, setSearch] = useState('')
   const [isCreating, setIsCreating] = useState(false)
 
   const { data, isPending, error } = useBuses(showRetired)
@@ -57,25 +58,36 @@ export function Fleet() {
   }, [defects])
 
   const buses = useMemo(() => {
-    const all = data ?? []
-    return category === 'all'
-      ? all
-      : all.filter((bus) => bus.category === category)
-  }, [data, category])
+    const needle = search.trim()
+    return (data ?? []).filter(
+      (bus) =>
+        (depot === 'all' || bus.depot === depot) &&
+        (!needle || bus.number.includes(needle)),
+    )
+  }, [data, depot, search])
 
   return (
-    <div className="flex h-full flex-col p-7">
+    <div className="flex flex-col p-4 sm:p-7 lg:h-full">
       <div className="mb-6 flex shrink-0 flex-wrap items-center gap-3">
+        {/* Close to 300 garage numbers: finding one by scrolling is not
+            realistic, least of all on a phone. */}
+        <input
+          type="search"
+          inputMode="numeric"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder={t('fleetSearch')}
+          className="w-full rounded-md bg-black/[0.05] px-3.5 py-2 text-[14px] text-ink placeholder:text-ink-3 focus:bg-surface focus:ring-2 focus:ring-accent/30 focus:outline-none sm:w-56"
+        />
         <Select
-          value={category}
-          onChange={(event) =>
-            setCategory(event.target.value as CategoryFilter)
-          }
+          value={depot}
+          onChange={(event) => setDepot(event.target.value as DepotFilter)}
+          className="sm:w-auto"
         >
-          <option value="all">{t('filterAll')}</option>
-          {BUS_CATEGORIES.map((value) => (
+          <option value="all">{t('filterAllDepots')}</option>
+          {DEPOTS.map((value) => (
             <option key={value} value={value}>
-              {categoryLabel(t, value)}
+              {depotLabel(t, value)}
             </option>
           ))}
         </Select>
@@ -111,12 +123,32 @@ export function Fleet() {
             {t('fleetEmpty')}
           </p>
         ) : (
-          <div className="min-h-0 flex-1 overflow-auto">
+          <>
+          <ul className="divide-y divide-hairline md:hidden">
+            {buses.map((bus) => (
+              <BusCard
+                key={bus.id}
+                bus={bus}
+                openCount={openByBus.get(bus.id) ?? 0}
+                onOpenDefects={() =>
+                  void navigate(`/defects?q=${encodeURIComponent(bus.number)}`)
+                }
+                onToggleActive={() =>
+                  update.mutate({
+                    id: bus.id,
+                    body: { is_active: !bus.is_active },
+                  })
+                }
+                onDelete={() => remove.mutate(bus.id)}
+              />
+            ))}
+          </ul>
+          <div className="hidden min-h-0 flex-1 overflow-auto md:block">
             <table className="w-full border-collapse">
               <thead className="sticky top-0 z-10 bg-surface">
                 <tr>
                   <Th>{t('colBusNumber')}</Th>
-                  <Th>{t('fleetCategory')}</Th>
+                  <Th>{t('fleetDepot')}</Th>
                   <Th>{t('fleetOpenDefects')}</Th>
                   <Th>{t('fleetNotes')}</Th>
                   <Th className="text-right" />
@@ -143,6 +175,7 @@ export function Fleet() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </Panel>
 
@@ -184,7 +217,9 @@ function BusRow({
           </span>
         ) : null}
       </Td>
-      <Td className="text-ink-2">{categoryLabel(t, bus.category)}</Td>
+      <Td className="text-ink-2">
+        {bus.depot ? depotLabel(t, bus.depot) : '—'}
+      </Td>
       <Td>
         {openCount > 0 ? (
           <button
@@ -220,6 +255,62 @@ function BusRow({
   )
 }
 
+/** The same row for a phone, kept to one line: with ~300 buses, a card
+ *  per bus has to stay short or the list becomes endless scrolling. */
+function BusCard({
+  bus,
+  openCount,
+  onOpenDefects,
+  onToggleActive,
+  onDelete,
+}: {
+  bus: Bus
+  openCount: number
+  onOpenDefects: () => void
+  onToggleActive: () => void
+  onDelete: () => void
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <li className="flex items-center gap-2 py-2 pr-2 pl-4">
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-2">
+          <span className="text-[16px] font-semibold text-ink">{bus.number}</span>
+          {openCount > 0 ? (
+            <button
+              type="button"
+              onClick={onOpenDefects}
+              aria-label={t('fleetOpenDefects')}
+              className="rounded-full bg-accent/10 px-2 py-0.5 text-[12px] font-medium text-accent"
+            >
+              {openCount}
+            </button>
+          ) : null}
+          {!bus.is_active ? (
+            <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-[12px] text-ink-3">
+              {t('fleetRetired')}
+            </span>
+          ) : null}
+        </p>
+        <p className="truncate text-[13px] text-ink-3">
+          {bus.depot ? depotLabel(t, bus.depot) : '—'}
+          {bus.notes ? ` · ${bus.notes}` : ''}
+        </p>
+      </div>
+      <Button size="sm" variant="ghost" onClick={onToggleActive}>
+        {bus.is_active ? t('fleetRetire') : t('fleetRestore')}
+      </Button>
+      {/* Same rule as the table: deleting is only offered without history. */}
+      {openCount === 0 ? (
+        <Button size="sm" variant="danger" onClick={onDelete}>
+          {t('fleetDelete')}
+        </Button>
+      ) : null}
+    </li>
+  )
+}
+
 function CreateBusDialog({
   open,
   onOpenChange,
@@ -231,7 +322,7 @@ function CreateBusDialog({
   const create = useCreateBus()
 
   const [number, setNumber] = useState('')
-  const [category, setCategory] = useState<BusCategory>('urban')
+  const [depot, setDepot] = useState<Depot>('avtokomanda')
   const [notes, setNotes] = useState('')
   const [error, setError] = useState<string | null>(null)
 
@@ -241,7 +332,7 @@ function CreateBusDialog({
     try {
       await create.mutateAsync({
         number: number.trim(),
-        category,
+        depot,
         notes: notes.trim() || null,
       })
       onOpenChange(false)
@@ -260,7 +351,7 @@ function CreateBusDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-ink/25 backdrop-blur-sm" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-surface p-7 shadow-[var(--shadow-raised)]">
+        <Dialog.Content className="fixed top-1/2 left-1/2 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-surface p-5 shadow-[var(--shadow-raised)] sm:p-7">
           <Dialog.Title className="text-[19px] font-semibold tracking-tight text-ink">
             {t('fleetCreateTitle')}
           </Dialog.Title>
@@ -274,15 +365,13 @@ function CreateBusDialog({
               onChange={(event) => setNumber(event.target.value)}
             />
             <Select
-              label={t('fleetCategory')}
-              value={category}
-              onChange={(event) =>
-                setCategory(event.target.value as BusCategory)
-              }
+              label={t('fleetDepot')}
+              value={depot}
+              onChange={(event) => setDepot(event.target.value as Depot)}
             >
-              {BUS_CATEGORIES.map((value) => (
+              {DEPOTS.map((value) => (
                 <option key={value} value={value}>
-                  {categoryLabel(t, value)}
+                  {depotLabel(t, value)}
                 </option>
               ))}
             </Select>

@@ -324,9 +324,9 @@ class _StatusUpdatePanel extends ConsumerWidget {
   }
 }
 
-/// Lets a dispatcher (standing in for the Арматура department) confirm or
+/// Lets a dispatcher (standing in for Приемна контрола, intake inspection) confirm or
 /// correct the defect's category. The reporter's initial pick is just a
-/// guess from the driver's card / phone call — Арматура is the step that
+/// guess from the driver's card / phone call — intake inspection is the step that
 /// actually pins it down to electrical / mechanical / bravari, which in
 /// turn decides which department the repair gets routed to.
 class _ClassifyPanel extends ConsumerStatefulWidget {
@@ -339,7 +339,7 @@ class _ClassifyPanel extends ConsumerStatefulWidget {
 
 class _ClassifyPanelState extends ConsumerState<_ClassifyPanel> {
   // Null means "not chosen yet" — the case right after a report comes in
-  // still marked unclassified, before Armatura has picked a real category.
+  // still marked unclassified, before intake inspection has picked a real category.
   late DefectType? _selected = _initialSelection(widget.defect.type);
   bool _isSaving = false;
 
@@ -375,7 +375,7 @@ class _ClassifyPanelState extends ConsumerState<_ClassifyPanel> {
         _selected != null && _selected == widget.defect.type;
     final canSave = _selected != null && !unchanged;
 
-    // Armatura always picks a real category — "unclassified" isn't a valid
+    // Intake inspection always picks a real category — "unclassified" isn't a valid
     // classification outcome, just the pre-review default.
     final options = DefectType.values
         .where((type) => type != DefectType.unclassified)

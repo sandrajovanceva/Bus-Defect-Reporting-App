@@ -61,13 +61,13 @@ class TokenResponse(BaseModel):
 # --- buses ---
 class BusCreate(BaseModel):
     number: str
-    category: str = "urban"
+    depot: str
     notes: Optional[str] = None
 
 
 class BusUpdate(BaseModel):
     number: Optional[str] = None
-    category: Optional[str] = None
+    depot: Optional[str] = None
     is_active: Optional[bool] = None
     notes: Optional[str] = None
 
@@ -77,7 +77,7 @@ class BusRead(BaseModel):
 
     id: str
     number: str
-    category: str
+    depot: Optional[str] = None
     is_active: bool = True
     notes: Optional[str] = None
 
@@ -97,7 +97,7 @@ class HistoryEntry(BaseModel):
 class DefectCreate(BaseModel):
     bus_number: str
     driver_name: str
-    # Neither type nor priority: both are Арматура's to determine once the
+    # Neither type nor priority: both are intake inspection's to determine once the
     # bus reaches the depot, so a report is always filed unclassified.
     description: str
     image_base64: Optional[str] = None
@@ -142,6 +142,6 @@ class StatusUpdate(BaseModel):
 
 class TypeUpdate(BaseModel):
     type: str
-    # Арматура judges urgency at the same time as the category, so both are
+    # Intake inspection judges urgency at the same time as the category, so both are
     # set in one action rather than two.
     priority: Optional[str] = None

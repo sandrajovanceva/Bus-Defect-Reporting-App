@@ -10,6 +10,7 @@ import {
   Panel,
   PriorityChip,
   SectionLabel,
+  Select,
   StatusPill,
 } from '../components/ui'
 import {
@@ -49,14 +50,14 @@ export function DefectDetails() {
   if (isPending) return <LoadingState />
   if (error) {
     return (
-      <div className="p-7">
+      <div className="p-4 sm:p-7">
         <ErrorState message={error.message} />
       </div>
     )
   }
   if (!defect) {
     return (
-      <div className="p-7">
+      <div className="p-4 sm:p-7">
         <ErrorState message={t('detailsNotFound')} />
       </div>
     )
@@ -66,7 +67,7 @@ export function DefectDetails() {
   const isOwner = user?.role === 'service' && defect.assigned_to_id === user.id
 
   return (
-    <div className="p-7">
+    <div className="p-4 sm:p-7">
       <button
         type="button"
         onClick={() => void navigate(-1)}
@@ -76,7 +77,7 @@ export function DefectDetails() {
       </button>
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <h2 className="text-[26px] font-semibold tracking-tight text-ink">
+        <h2 className="text-[22px] font-semibold tracking-tight break-all text-ink sm:text-[26px]">
           {defect.id}
         </h2>
         <StatusPill status={defect.status} />
@@ -221,7 +222,7 @@ function Fact({
   )
 }
 
-/** Армaтура's classification, which also routes the defect to a department. */
+/** Intake inspection's classification, which also routes the defect to a department. */
 function ClassifyPanel({
   defectId,
   currentType,
@@ -239,22 +240,20 @@ function ClassifyPanel({
     <div>
       <SectionLabel>{t('sectionClassify')}</SectionLabel>
       <Panel className="flex flex-wrap items-end gap-3 p-5">
-        <label className="block">
-          <span className="field-label mb-1.5 block">{t('labelType')}</span>
-          <select
-            value={type}
-            onChange={(event) => setType(event.target.value as DefectType)}
-            className="rounded-md bg-black/[0.04] px-3 py-2 text-sm text-ink focus:bg-surface focus:ring-2 focus:ring-accent/30 focus:outline-none"
-          >
-            {DEFECT_TYPES.filter((value) => value !== 'unclassified').map(
-              (value) => (
-                <option key={value} value={value}>
-                  {typeLabel(t, value)}
-                </option>
-              ),
-            )}
-          </select>
-        </label>
+        <Select
+          label={t('labelType')}
+          value={type}
+          onChange={(event) => setType(event.target.value as DefectType)}
+          className="sm:w-auto sm:min-w-52"
+        >
+          {DEFECT_TYPES.filter((value) => value !== 'unclassified').map(
+            (value) => (
+              <option key={value} value={value}>
+                {typeLabel(t, value)}
+              </option>
+            ),
+          )}
+        </Select>
 
         {/* Shows where the choice sends it before it is saved. */}
         <p className="pb-2.5 text-[13px] text-ink-3">

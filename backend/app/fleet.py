@@ -4,7 +4,8 @@ import logging
 import uuid
 
 from fastapi import HTTPException
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import inspect, text
+from sqlalchemy.exc import IntegrityError, OperationalError, ProgrammingError
 from sqlmodel import Session, select
 
 from .database import engine
@@ -46,16 +47,72 @@ def require_bus(session: Session, number: str) -> Bus:
     return bus
 
 
-def seed_fleet() -> None:
-    """Load JSP's published bus numbers on first start.
+def remove_line_number_registry() -> None:
+    """Clear out the registry as it was before depots existed.
 
-    Only ever adds: a number a dispatcher has since retired or renamed must
-    not come back on the next restart.
+    It was seeded with JSP's *line* numbers (2, 22П, 65В…) under an
+    urban/regional/night category, mistaking them for buses. Those rows are
+    the ones without a depot. They are deleted rather than retired: they were
+    never vehicles, and several collide with real garage numbers ("7" is both
+    a line and a bus at Ѓорче Петров).
+
+    Reports filed against them keep their bus_number text, so they still read
+    as filed; only the link to the bogus row is cleared. Nothing re-links
+    them afterwards, since line 7 and garage bus 7 are different things.
+    """
+    _drop_category_column()
+
+    with Session(engine) as session:
+        legacy = session.exec(
+            select(Bus).where(Bus.depot == None)  # noqa: E711
+        ).all()
+        if not legacy:
+            return
+
+        legacy_ids = [bus.id for bus in legacy]
+        reports = session.exec(
+            select(Defect).where(Defect.bus_id.in_(legacy_ids))
+        ).all()
+        for defect in reports:
+            defect.bus_id = None
+            session.add(defect)
+        for bus in legacy:
+            session.delete(bus)
+        session.commit()
+        logger.info(
+            "Removed %s line-number entries from the fleet registry; "
+            "unlinked %s report(s), which keep the number they were filed with.",
+            len(legacy),
+            len(reports),
+        )
+
+
+def _drop_category_column() -> None:
+    """The old `category` column is NOT NULL with no database default, so
+    while it exists no new bus can be inserted. Dropped rather than left
+    behind; it only ever held the urban/regional/night grouping of lines."""
+    columns = {col["name"] for col in inspect(engine).get_columns("bus")}
+    if "category" not in columns:
+        return
+    try:
+        with engine.begin() as connection:
+            connection.execute(text('ALTER TABLE "bus" DROP COLUMN "category"'))
+    except (OperationalError, ProgrammingError):
+        # Another worker dropped it between the inspection and now.
+        return
+    logger.info("Dropped the old bus.category column.")
+
+
+def seed_fleet() -> None:
+    """Load JSP's garage numbers for both depots on first start.
+
+    Only ever adds: a number a dispatcher has since retired or moved to the
+    other depot must not be reset on the next restart.
     """
     with Session(engine) as session:
         existing = {bus.number for bus in session.exec(select(Bus)).all()}
         added = 0
-        for category, numbers in BUS_NUMBERS.items():
+        for depot, numbers in BUS_NUMBERS.items():
             for number in numbers:
                 normalised = normalise_number(number)
                 if normalised in existing:
@@ -64,7 +121,7 @@ def seed_fleet() -> None:
                     Bus(
                         id=uuid.uuid4().hex,
                         number=normalised,
-                        category=category,
+                        depot=depot,
                     )
                 )
                 existing.add(normalised)
@@ -77,36 +134,3 @@ def seed_fleet() -> None:
                 session.rollback()
                 return
             logger.info("Seeded %s buses into the fleet registry.", added)
-
-
-def link_existing_defects() -> None:
-    """Attach defects filed before the registry existed to their bus.
-
-    Anything whose number is not in the registry keeps a null bus_id rather
-    than inventing a bus: those are the typos the registry exists to prevent,
-    and a dispatcher should see and fix them.
-    """
-    with Session(engine) as session:
-        unlinked = session.exec(
-            select(Defect).where(Defect.bus_id == None)  # noqa: E711
-        ).all()
-        if not unlinked:
-            return
-
-        by_number = {
-            bus.number: bus.id for bus in session.exec(select(Bus)).all()
-        }
-        linked = 0
-        for defect in unlinked:
-            bus_id = by_number.get(normalise_number(defect.bus_number))
-            if bus_id:
-                defect.bus_id = bus_id
-                session.add(defect)
-                linked += 1
-
-        if linked:
-            session.commit()
-        orphans = len(unlinked) - linked
-        logger.info(
-            "Linked %s defect(s) to buses; %s left unmatched.", linked, orphans
-        )

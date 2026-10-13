@@ -815,7 +815,7 @@ abstract class AppLocalizations {
   /// No description provided for @statusArmaturaReview.
   ///
   /// In en, this message translates to:
-  /// **'At Armatura'**
+  /// **'At intake inspection'**
   String get statusArmaturaReview;
 
   /// No description provided for @statusInProgress.
@@ -845,13 +845,13 @@ abstract class AppLocalizations {
   /// No description provided for @sectionClassify.
   ///
   /// In en, this message translates to:
-  /// **'ARMATURA CLASSIFICATION'**
+  /// **'INTAKE INSPECTION: CLASSIFICATION'**
   String get sectionClassify;
 
   /// No description provided for @classifyHelperNote.
   ///
   /// In en, this message translates to:
-  /// **'Armatura reviews the report and determines the actual defect category — electrical, mechanical or bravari (bodywork) — which sets the department it\'s routed to.'**
+  /// **'Intake inspection reviews the report and determines the actual defect category — electrical, mechanical or bravari (bodywork) — which sets the department it\'s routed to.'**
   String get classifyHelperNote;
 
   /// No description provided for @classifySave.
@@ -1301,7 +1301,7 @@ abstract class AppLocalizations {
   /// No description provided for @deptUnassigned.
   ///
   /// In en, this message translates to:
-  /// **'Pending Armatura review'**
+  /// **'Pending intake inspection'**
   String get deptUnassigned;
 
   /// No description provided for @deptElectrical.
@@ -1331,7 +1331,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportPendingClassification.
   ///
   /// In en, this message translates to:
-  /// **'No need to pick a category — Armatura will review the description and classify the defect (electrical, mechanical, bravari/bodywork, etc.) once the report comes in.'**
+  /// **'No need to pick a category — intake inspection will review the description and classify the defect (electrical, mechanical, bravari/bodywork, etc.) once the report comes in.'**
   String get reportPendingClassification;
 
   /// No description provided for @busesLoadFailed.
@@ -1340,23 +1340,17 @@ abstract class AppLocalizations {
   /// **'Could not load the fleet list.'**
   String get busesLoadFailed;
 
-  /// No description provided for @categoryUrban.
+  /// No description provided for @depotAvtokomanda.
   ///
   /// In en, this message translates to:
-  /// **'Urban'**
-  String get categoryUrban;
+  /// **'Avtokomanda'**
+  String get depotAvtokomanda;
 
-  /// No description provided for @categoryRegional.
+  /// No description provided for @depotGjorchePetrov.
   ///
   /// In en, this message translates to:
-  /// **'Regional'**
-  String get categoryRegional;
-
-  /// No description provided for @categoryNight.
-  ///
-  /// In en, this message translates to:
-  /// **'Night'**
-  String get categoryNight;
+  /// **'Gjorče Petrov'**
+  String get depotGjorchePetrov;
 }
 
 class _AppLocalizationsDelegate

@@ -11,7 +11,7 @@ from sqlmodel import Session, select
 
 from ..database import get_session
 from ..deps import get_current_user
-from ..fleet_data import BUS_CATEGORIES
+from ..fleet_data import DEPOTS
 from ..models import Bus, Defect, User
 from ..schemas import BusCreate, BusRead, BusUpdate
 
@@ -31,13 +31,13 @@ def _normalise(number: str) -> str:
     return number.strip().replace(" ", "").upper()
 
 
-def _check_category(category: str) -> str:
-    if category not in BUS_CATEGORIES:
+def _check_depot(depot: str) -> str:
+    if depot not in DEPOTS:
         raise HTTPException(
             status_code=422,
-            detail="Category must be one of: " + ", ".join(BUS_CATEGORIES),
+            detail="Depot must be one of: " + ", ".join(DEPOTS),
         )
-    return category
+    return depot
 
 
 @router.get("", response_model=list[BusRead])
@@ -82,7 +82,7 @@ def create_bus(
     bus = Bus(
         id=uuid.uuid4().hex,
         number=number,
-        category=_check_category(body.category),
+        depot=_check_depot(body.depot),
         notes=body.notes,
     )
     session.add(bus)
@@ -113,8 +113,8 @@ def update_bus(
                 status_code=409, detail="Another bus already has that number"
             )
         bus.number = number
-    if body.category is not None:
-        bus.category = _check_category(body.category)
+    if body.depot is not None:
+        bus.depot = _check_depot(body.depot)
     if body.is_active is not None:
         bus.is_active = body.is_active
     if body.notes is not None:

@@ -102,7 +102,7 @@ class DefectRepository {
     }
   }
 
-  /// Armatura classification: pins down the actual defect type (and
+  /// Intake inspection classification: pins down the actual defect type (and
   /// therefore department), which may differ from the reporter's initial
   /// guess when the report was filed.
   Future<void> reclassify({

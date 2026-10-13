@@ -1,8 +1,8 @@
 import type { TFunction } from 'i18next'
 
 import type {
-  BusCategory,
   Defect,
+  Depot,
   DefectStatus,
   DefectType,
   Department,
@@ -49,10 +49,9 @@ const ROLE_KEYS: Record<UserRole, string> = {
   armatura: 'roleArmatura',
 }
 
-const CATEGORY_KEYS: Record<BusCategory, string> = {
-  urban: 'categoryUrban',
-  regional: 'categoryRegional',
-  night: 'categoryNight',
+const DEPOT_KEYS: Record<Depot, string> = {
+  avtokomanda: 'depotAvtokomanda',
+  gjorche_petrov: 'depotGjorchePetrov',
 }
 
 const PRIORITY_KEYS: Record<Priority, string> = {
@@ -66,8 +65,7 @@ export const typeLabel = (t: TFunction, v: DefectType) => t(TYPE_KEYS[v])
 export const departmentLabel = (t: TFunction, d: Department) =>
   t(DEPARTMENT_KEYS[d])
 export const roleLabel = (t: TFunction, r: UserRole) => t(ROLE_KEYS[r])
-export const categoryLabel = (t: TFunction, c: BusCategory) =>
-  t(CATEGORY_KEYS[c])
+export const depotLabel = (t: TFunction, d: Depot) => t(DEPOT_KEYS[d])
 export const priorityLabel = (t: TFunction, p: Priority) =>
   t(PRIORITY_KEYS[p], { defaultValue: p })
 
@@ -199,14 +197,68 @@ export function historyText(
   }
 }
 
+/**
+ * Parses a timestamp from the API. The backend stores UTC but serialises it
+ * without an offset ("2026-10-05T14:03:00"), which `new Date` would read as
+ * local time — an hour or two off in Skopje, and enough to put a report filed
+ * after midnight on the wrong day.
+ */
+export function parseApiDate(iso: string): Date {
+  const hasOffset = /(Z|[+-]\d{2}:?\d{2})$/.test(iso)
+  return new Date(hasOffset ? iso : `${iso}Z`)
+}
+
+/** A date as YYYY-MM-DD in the viewer's local calendar. */
+export function localDayKey(date: Date): string {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+/**
+ * Calendar names, spelled out rather than taken from `Intl`: browsers on
+ * Windows ship without Macedonian data and silently fall back to US English
+ * ("08/22/2026, 02:24 PM"), which is what JSP saw.
+ */
+const MONTHS: Record<'mk' | 'en', string[]> = {
+  mk: [
+    'јануари', 'февруари', 'март', 'април', 'мај', 'јуни',
+    'јули', 'август', 'септември', 'октомври', 'ноември', 'декември',
+  ],
+  en: [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ],
+}
+
+/** Monday first, as the week starts in Macedonia. */
+const WEEKDAYS_SHORT: Record<'mk' | 'en', string[]> = {
+  mk: ['пон', 'вто', 'сре', 'чет', 'пет', 'саб', 'нед'],
+  en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+}
+
+const lang = (locale: string): 'mk' | 'en' => (locale === 'en' ? 'en' : 'mk')
+const pad = (n: number) => String(n).padStart(2, '0')
+const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+export const monthName = (month: number, locale: string) =>
+  MONTHS[lang(locale)][month]
+
+/** Weekday column headers for a Monday-first calendar. */
+export const weekdayHeaders = (locale: string) =>
+  WEEKDAYS_SHORT[lang(locale)].map(capitalise)
+
+/** "Сре, 7 окт 2026" — one day, short enough for a button. */
+export function formatDayShort(date: Date, locale: string): string {
+  const l = lang(locale)
+  const weekday = WEEKDAYS_SHORT[l][(date.getDay() + 6) % 7]
+  const month = MONTHS[l][date.getMonth()].slice(0, 3)
+  return `${capitalise(weekday)}, ${date.getDate()} ${month} ${date.getFullYear()}`
+}
+
+/** "22.08.2026 14:24" in Macedonian, "22/08/2026 14:24" in English. */
 export function formatDateTime(iso: string, locale: string): string {
-  const date = new Date(iso)
+  const date = parseApiDate(iso)
   if (Number.isNaN(date.getTime())) return '—'
-  return new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'mk-MK', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
+  const sep = lang(locale) === 'en' ? '/' : '.'
+  const day = [pad(date.getDate()), pad(date.getMonth() + 1), date.getFullYear()]
+  return `${day.join(sep)} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }

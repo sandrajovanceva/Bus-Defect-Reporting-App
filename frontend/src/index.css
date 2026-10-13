@@ -61,6 +61,19 @@
   --shadow-raised: 0 2px 4px rgb(0 0 0 / 0.05), 0 16px 40px rgb(0 0 0 / 0.10);
 }
 
+/* Floating menus and the calendar grow out of their trigger, the way a
+   system popover does, rather than appearing flat. */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @layer base {
   html,
   body,
@@ -125,6 +138,12 @@
     box-shadow:
       inset 0 -1px 0 rgb(255 255 255 / 0.6),
       0 1px 12px rgb(60 48 30 / 0.05);
+  }
+
+  .glass-edge-top {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.6),
+      0 -1px 12px rgb(60 48 30 / 0.05);
   }
 
   .glass-edge-right {

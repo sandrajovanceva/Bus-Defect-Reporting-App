@@ -14,13 +14,15 @@ from .security import hash_password
 
 logger = logging.getLogger("uvicorn.error")
 
-# "armatura" is the fittings department: the first stop after a report is
-# filed, where the defect category — electrical / mechanical / bravari — is
-# determined and the report routed onward.
+# "armatura" is Приемна контрола (intake inspection): the first stop after a
+# report is filed, where the defect category — electrical / mechanical /
+# bravari — is determined and the report routed onward. The value is a
+# leftover from when the role was wrongly named after Арматура, which is a
+# separate JSP department; it stays because it is stored on every account.
 VALID_ROLES = {"driver", "dispatcher", "service", "armatura"}
 
 # Departments a service worker can belong to. "unassigned" is reserved for
-# defects awaiting Armatura classification and is never a worker's department.
+# defects awaiting intake inspection and is never a worker's department.
 VALID_DEPARTMENTS = {"electrical", "mechanical", "bodywork", "general"}
 
 
@@ -109,8 +111,22 @@ def ensure_bootstrap_admin() -> None:
                 full_name=settings.bootstrap_admin_name,
                 role="dispatcher",
             )
-        except (IntegrityError, HTTPException):
+        except IntegrityError:
+            # Another worker won the race and created the same account.
             session.rollback()
+            return
+        except HTTPException as error:
+            # A rejected password or malformed email leaves the deployment
+            # with no way in at all, so it has to be loud. Swallowing this
+            # silently is how you get a database nobody can sign in to.
+            session.rollback()
+            logger.error(
+                "Could not create the bootstrap dispatcher '%s': %s. "
+                "Fix BOOTSTRAP_ADMIN_EMAIL / BOOTSTRAP_ADMIN_PASSWORD and "
+                "redeploy.",
+                settings.bootstrap_admin_email,
+                error.detail,
+            )
             return
         logger.warning(
             "Bootstrapped first dispatcher '%s'. Change its password after "

@@ -18,7 +18,7 @@ extension DefectStatusX on DefectStatus {
       case DefectStatus.newReport:
         return 'NEW';
       case DefectStatus.armaturaReview:
-        return 'AT ARMATURA';
+        return 'AT INTAKE INSPECTION';
       case DefectStatus.inProgress:
         return 'IN PROGRESS';
       case DefectStatus.onHold:

@@ -35,10 +35,10 @@ export function Login() {
   }
 
   return (
-    <div className="flex min-h-full items-center justify-center px-6 py-12">
+    <div className="flex min-h-full items-center justify-center px-4 py-12 sm:px-6">
       <div className="w-full max-w-[420px]">
         <div className="overflow-hidden rounded-xl bg-surface shadow-[var(--shadow-raised)]">
-          <div className="px-9 py-9">
+          <div className="px-6 py-8 sm:px-9 sm:py-9">
             <img
               src="/brand/jsp-logo.png"
               alt="ЈСП Скопје"
@@ -85,7 +85,7 @@ export function Login() {
             </form>
           </div>
 
-          <div className="border-t border-hairline bg-black/[0.02] px-9 py-4">
+          <div className="border-t border-hairline bg-black/[0.02] px-6 py-4 sm:px-9">
             <p className="text-center text-[13px] leading-relaxed text-ink-3">
               {t('loginNoAccess')} {t('loginContactDispatch')}
             </p>

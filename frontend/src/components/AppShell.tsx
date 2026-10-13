@@ -2,6 +2,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import clsx from 'clsx'
 import {
   Bus,
+  CalendarDays,
   ClipboardList,
   SlidersHorizontal,
   LayoutGrid,
@@ -38,8 +39,14 @@ const NAV: NavItem[] = [
     roles: ['dispatcher'],
   },
   {
-    to: '/armatura',
-    labelKey: 'navArmatura',
+    to: '/daily',
+    labelKey: 'navDailyReport',
+    icon: CalendarDays,
+    roles: ['dispatcher'],
+  },
+  {
+    to: '/intake',
+    labelKey: 'navIntake',
     icon: SlidersHorizontal,
     roles: ['armatura'],
   },
@@ -80,15 +87,57 @@ export function AppShell() {
       {/* One scroll surface for the whole app. Content runs the full height
           and width and is inset by the chrome's size, so cards physically
           pass beneath the bar and the nav rather than stopping at them —
-          that movement is what makes the frost read as glass. */}
-      <main className="h-full overflow-auto pt-14 pl-[248px]">
+          that movement is what makes the frost read as glass. On a phone
+          the nav sits at the bottom instead of the side. */}
+      <main className="h-full overflow-auto pt-14 pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-[248px]">
         <h1 className="sr-only">{current ? t(current.labelKey) : ''}</h1>
         <Outlet />
       </main>
 
       <Sidebar items={items} />
+      <BottomNav items={items} />
       <TopBar />
     </div>
+  )
+}
+
+/**
+ * The phone navigation: a tab bar within thumb reach, in place of the
+ * sidebar. No role has more than five destinations, so every one fits
+ * without a "more" menu.
+ */
+function BottomNav({ items }: { items: NavItem[] }) {
+  const { t } = useTranslation()
+
+  return (
+    <nav className="glass glass-edge-top fixed inset-x-0 bottom-0 z-20 border-t border-hairline pb-[env(safe-area-inset-bottom)] lg:hidden">
+      <ul
+        className="grid h-16"
+        style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+      >
+        {items.map((item) => (
+          <li key={item.to} className="min-w-0">
+            <NavLink
+              to={item.to}
+              className={({ isActive }) =>
+                clsx(
+                  'flex h-full flex-col items-center justify-center gap-0.5 px-1',
+                  'transition-colors duration-150',
+                  isActive ? 'text-accent' : 'text-ink-3 hover:text-ink',
+                )
+              }
+            >
+              <item.icon size={21} strokeWidth={1.9} aria-hidden />
+              {/* Two lines allowed: "Дневен извештај" breaks cleanly in two
+                  rather than being cut off. */}
+              <span className="line-clamp-2 max-w-full text-center text-[11px] leading-[1.15] font-medium">
+                {t(item.labelKey)}
+              </span>
+            </NavLink>
+          </li>
+        ))}
+      </ul>
+    </nav>
   )
 }
 
@@ -97,7 +146,7 @@ function Sidebar({ items }: { items: NavItem[] }) {
   const { user } = useAuth()
 
   return (
-    <aside className="glass glass-edge-right fixed top-14 bottom-0 left-0 z-20 flex w-[248px] flex-col border-r border-hairline">
+    <aside className="glass glass-edge-right fixed top-14 bottom-0 left-0 z-20 hidden w-[248px] flex-col border-r border-hairline lg:flex">
       <nav className="flex-1 px-3 py-4">
         <ul className="space-y-0.5">
           {items.map((item) => (
@@ -147,18 +196,33 @@ function TopBar() {
   const { user, signOut } = useAuth()
 
   return (
-    <header className="glass glass-edge-bottom fixed inset-x-0 top-0 z-30 flex h-14 items-center gap-3 border-b border-hairline px-5">
-      <img src="/brand/jsp-logo.png" alt="ЈСП Скопје" className="h-7 w-auto" />
-      <span aria-hidden className="h-5 w-px bg-hairline-strong" />
+    <header className="glass glass-edge-bottom fixed inset-x-0 top-0 z-30 flex h-14 items-center gap-3 border-b border-hairline px-4 sm:px-5">
+      <img
+        src="/brand/jsp-logo.png"
+        alt="ЈСП Скопје"
+        className="h-7 w-auto shrink-0"
+      />
+      <span aria-hidden className="h-5 w-px shrink-0 bg-hairline-strong" />
       {/* The product's name, not the page's, and not a description of it —
           the mark already says ЈСП, so this does not repeat it. */}
-      <p className="text-[15px] font-semibold tracking-tight text-ink">
+      <p className="min-w-0 truncate text-[15px] font-semibold tracking-tight text-ink">
         {t('appName')}
       </p>
 
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex shrink-0 items-center gap-1">
         <LanguageMenu />
-        {user ? <UserMenu name={user.full_name} onSignOut={signOut} /> : null}
+        {user ? (
+          <UserMenu
+            name={user.full_name}
+            // The sidebar's account card is hidden on a phone, so the menu
+            // carries the role there instead.
+            detail={
+              roleLabel(t, user.role) +
+              (user.department ? ` · ${departmentLabel(t, user.department)}` : '')
+            }
+            onSignOut={signOut}
+          />
+        ) : null}
       </div>
     </header>
   )
@@ -189,9 +253,11 @@ function Avatar({ name, className }: { name: string; className?: string }) {
 
 function UserMenu({
   name,
+  detail,
   onSignOut,
 }: {
   name: string
+  detail: string
   onSignOut: () => void
 }) {
   const { t } = useTranslation()
@@ -212,6 +278,7 @@ function UserMenu({
         >
           <div className="px-3 py-2">
             <p className="truncate text-[14px] font-medium text-ink">{name}</p>
+            <p className="truncate text-[12px] text-ink-3">{detail}</p>
           </div>
           <DropdownMenu.Separator className="my-1 h-px bg-hairline" />
           <DropdownMenu.Item

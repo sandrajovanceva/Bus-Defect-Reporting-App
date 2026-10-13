@@ -2,8 +2,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'api_client.dart';
 
-/// Category a bus belongs to, as JSP groups its lines.
-enum BusCategory { urban, regional, night }
+/// The JSP depot (автобаза) a bus is kept at. Wire names are the API's.
+enum BusDepot {
+  avtokomanda('avtokomanda'),
+  gjorchePetrov('gjorche_petrov');
+
+  const BusDepot(this.wireName);
+
+  final String wireName;
+}
 
 /// A bus in the fleet registry.
 ///
@@ -14,26 +21,26 @@ class BusModel {
   const BusModel({
     required this.id,
     required this.number,
-    required this.category,
+    required this.depot,
     required this.isActive,
     this.notes,
   });
 
   final String id;
+  /// Garage number (гаражен број) — the vehicle, not the line it runs.
   final String number;
-  final BusCategory category;
+  final BusDepot? depot;
   final bool isActive;
   final String? notes;
 
   static BusModel fromJson(Map<String, dynamic> json) {
-    final categoryName = json['category'] as String?;
+    final depotName = json['depot'] as String?;
     return BusModel(
       id: json['id'] as String,
       number: (json['number'] as String?) ?? '',
-      category: BusCategory.values.firstWhere(
-        (value) => value.name == categoryName,
-        orElse: () => BusCategory.urban,
-      ),
+      depot: BusDepot.values
+          .where((value) => value.wireName == depotName)
+          .firstOrNull,
       isActive: (json['is_active'] as bool?) ?? true,
       notes: json['notes'] as String?,
     );

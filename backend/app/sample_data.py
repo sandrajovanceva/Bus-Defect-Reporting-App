@@ -1,12 +1,12 @@
 """Demo defect reports positioned around Skopje for seeding.
 
-Bus numbers are real JSP lines from the fleet registry, so seeded defects
+Bus numbers are real JSP garage numbers from both depots, so seeded defects
 link to actual buses rather than inventing numbers.
 """
 
 SAMPLE_DEFECTS = [
     {
-        "bus_number": "2",
+        "bus_number": "1110",
         "driver_name": "Горан Петровски",
         "type": "brakes",
         "priority": "high",
@@ -17,7 +17,7 @@ SAMPLE_DEFECTS = [
         "hours_ago": 30,
     },
     {
-        "bus_number": "15А",
+        "bus_number": "1152",
         "driver_name": "Марија Стојановска",
         "type": "electrical",
         "priority": "medium",
@@ -28,7 +28,7 @@ SAMPLE_DEFECTS = [
         "hours_ago": 4,
     },
     {
-        "bus_number": "22П",
+        "bus_number": "2005",
         "driver_name": "Александар Ристовски",
         "type": "doors",
         "priority": "low",
@@ -39,7 +39,7 @@ SAMPLE_DEFECTS = [
         "hours_ago": 120,
     },
     {
-        "bus_number": "65В",
+        "bus_number": "1236",
         "driver_name": "Дарко Николовски",
         "type": "mechanical",
         "priority": "high",
@@ -50,7 +50,7 @@ SAMPLE_DEFECTS = [
         "hours_ago": 52,
     },
     {
-        "bus_number": "41",
+        "bus_number": "1023",
         "driver_name": "Слаѓана Ефтимова",
         "type": "lights",
         "priority": "medium",
@@ -61,7 +61,7 @@ SAMPLE_DEFECTS = [
         "hours_ago": 70,
     },
     {
-        "bus_number": "57А",
+        "bus_number": "2118",
         "driver_name": "Игор Трајковски",
         "type": "climate",
         "priority": "low",
@@ -72,7 +72,7 @@ SAMPLE_DEFECTS = [
         "hours_ago": 168,
     },
     {
-        "bus_number": "9П",
+        "bus_number": "1191",
         "driver_name": "Владимир Ангеловски",
         "type": "bodywork",
         "priority": "low",
@@ -83,7 +83,7 @@ SAMPLE_DEFECTS = [
         "hours_ago": 26,
     },
     {
-        "bus_number": "63",
+        "bus_number": "3002",
         "driver_name": "Билјана Костова",
         "type": "other",
         "priority": "medium",

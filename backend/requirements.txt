@@ -1,8 +1,14 @@
-fastapi>=0.115
-uvicorn[standard]>=0.30
-gunicorn>=22.0
-sqlmodel>=0.0.21
-passlib>=1.7.4
-pyjwt>=2.9
-pydantic-settings>=2.4
-psycopg[binary]>=3.2
+# Pinned to the versions the app is tested with. Unpinned, a deploy picks up
+# whatever is newest: SQLModel 0.0.48 / SQLAlchemy 2.1 started rejecting the
+# naive UTC timestamps this backend writes, and the API failed to boot.
+fastapi==0.138.2
+uvicorn[standard]==0.49.0
+gunicorn==26.0.0
+sqlmodel==0.0.39
+SQLAlchemy==2.0.51
+pydantic==2.13.4
+pydantic-settings==2.14.2
+passlib==1.7.4
+pyjwt==2.13.0
+python-dotenv==1.2.2
+psycopg[binary]==3.3.4

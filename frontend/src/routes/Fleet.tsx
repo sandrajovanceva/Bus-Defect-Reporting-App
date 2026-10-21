@@ -350,8 +350,8 @@ function CreateBusDialog({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-ink/25 backdrop-blur-sm" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-surface p-5 shadow-[var(--shadow-raised)] sm:p-7">
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/25 backdrop-blur-sm" />
+        <Dialog.Content className="fixed top-1/2 left-1/2 z-40 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-surface p-5 shadow-[var(--shadow-raised)] sm:p-7">
           <Dialog.Title className="text-[19px] font-semibold tracking-tight text-ink">
             {t('fleetCreateTitle')}
           </Dialog.Title>
